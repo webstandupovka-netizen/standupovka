@@ -15,10 +15,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Standupovka - Комедийные шоу и стендап выступления",
+  title: "Standupovka - Spectacole de comedie și stand-up",
   description: "Așa, bună seara! Show-ul tău preferat revine la Arena pentru că data trecută s-a lăsat cu scandal și băieții nu au încă răspuns la întrebarea: 'Cine este campionul ABS?'",
-  keywords: ["standupovka", "стендап", "комедия", "шоу", "выступления", "arena", "ABS", "чемпион", "scandal"],
-  authors: [{ name: "Standupovka Team" }],
+  keywords: ["standupovka", "stand-up", "comedie", "spectacol", "arena", "ABS", "campion", "scandal", "divertisment"],
+  authors: [{ name: "Echipa Standupovka" }],
   creator: "Standupovka",
   publisher: "Standupovka",
   formatDetection: {
@@ -34,23 +34,23 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'ro_RO',
     url: '/',
-    title: 'Standupovka - Комедийные шоу и стендап выступления',
+    title: 'Standupovka - Spectacole de comedie și stand-up',
     description: "Așa, bună seara! Show-ul tău preferat revine la Arena pentru că data trecută s-a lăsat cu scandal și băieții nu au încă răspuns la întrebarea: 'Cine este campionul ABS?'",
     siteName: 'Standupovka',
     images: [
       {
-        url: '/og.jpg',
+        url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001'}/og.jpg`,
         width: 1200,
         height: 630,
-        alt: 'Standupovka - Комедийные шоу и стендап выступления',
+        alt: 'Standupovka - Spectacole de comedie și stand-up',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Standupovka - Комедийные шоу и стендап выступления',
+    title: 'Standupovka - Spectacole de comedie și stand-up',
     description: "Așa, bună seara! Show-ul tău preferat revine la Arena pentru că data trecută s-a lăsat cu scandal și băieții nu au încă răspuns la întrebarea: 'Cine este campionul ABS?'",
-    images: ['/og.jpg'],
+    images: [`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001'}/og.jpg`],
     creator: '@standupovka',
   },
   robots: {
@@ -100,7 +100,7 @@ export default function RootLayout({
               "@context": "https://schema.org",
               "@type": "Organization",
               "name": "Standupovka",
-              "description": "Комедийные шоу и стендап выступления",
+              "description": "Spectacole de comedie și stand-up",
               "url": process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001',
               "logo": {
                 "@type": "ImageObject",
