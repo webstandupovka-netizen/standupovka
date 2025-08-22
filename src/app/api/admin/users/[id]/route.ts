@@ -10,7 +10,7 @@ const supabase = createClient<Database>(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Проверяем авторизацию админа
@@ -37,11 +37,14 @@ export async function PATCH(
       )
     }
 
+    // Получаем параметры
+    const resolvedParams = await params
+
     // Обновляем пользователя
     const { data, error } = await supabase
       .from('user_profiles')
       .update({ free_access })
-      .eq('id', params.id)
+      .eq('id', resolvedParams.id)
       .select()
       .single()
 
