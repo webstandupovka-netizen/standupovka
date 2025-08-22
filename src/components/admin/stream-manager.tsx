@@ -23,7 +23,6 @@ interface StreamData {
   poster_url?: string
   is_live: boolean
   is_active: boolean
-  max_concurrent_viewers: number
   price: number
   currency: string
 }
@@ -159,7 +158,7 @@ export function StreamManager({ streamId }: StreamManagerProps) {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             <div>
               <Label className="text-sm text-muted-foreground">Статус</Label>
               <div className="flex items-center gap-2 mt-1">
@@ -199,10 +198,6 @@ export function StreamManager({ streamId }: StreamManagerProps) {
             <div>
               <Label className="text-sm text-muted-foreground">Цена</Label>
               <p className="font-medium">{stream.price} {stream.currency}</p>
-            </div>
-            <div>
-              <Label className="text-sm text-muted-foreground">Макс. зрителей</Label>
-              <p className="font-medium">{stream.max_concurrent_viewers}</p>
             </div>
           </div>
         </CardContent>
@@ -374,75 +369,7 @@ export function StreamManager({ streamId }: StreamManagerProps) {
         </CardContent>
       </Card>
 
-      {/* Инструкции по настройке Live */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Инструкции по настройке Castr Live</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-3">
-            <div className="flex items-start gap-3">
-              <div className="bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center text-sm font-medium mt-0.5">
-                1
-              </div>
-              <div>
-                <h4 className="font-medium">Создайте Live Stream в Castr</h4>
-                <p className="text-sm text-muted-foreground">
-                  Войдите в панель Castr, создайте новый Live Stream и получите RTMP URL и Stream Key
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-start gap-3">
-              <div className="bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center text-sm font-medium mt-0.5">
-                2
-              </div>
-              <div>
-                <h4 className="font-medium">Настройте OBS Studio</h4>
-                <p className="text-sm text-muted-foreground">
-                  Используйте RTMP URL и Stream Key из Castr для настройки трансляции в OBS
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-start gap-3">
-              <div className="bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center text-sm font-medium mt-0.5">
-                3
-              </div>
-              <div>
-                <h4 className="font-medium">Получите Stream ID</h4>
-                <p className="text-sm text-muted-foreground">
-                  Скопируйте Stream ID из панели Castr и вставьте в поля выше
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-start gap-3">
-              <div className="bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center text-sm font-medium mt-0.5">
-                4
-              </div>
-              <div>
-                <h4 className="font-medium">Запустите трансляцию</h4>
-                <p className="text-sm text-muted-foreground">
-                  Включите "Live статус" когда начнете трансляцию в OBS и активируйте стрим в Castr
-                </p>
-              </div>
-            </div>
-            
-            <div className="flex items-start gap-3">
-              <div className="bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center text-sm font-medium mt-0.5">
-                5
-              </div>
-              <div>
-                <h4 className="font-medium">Настройте воспроизведение</h4>
-                <p className="text-sm text-muted-foreground">
-                  Используйте Playback URL для встраивания стрима на вашем сайте
-                </p>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+
     </div>
   )
 }

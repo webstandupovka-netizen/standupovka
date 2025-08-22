@@ -93,7 +93,6 @@ export interface StreamSettings {
   currency: string
   is_live: boolean
   is_active: boolean
-  max_concurrent_viewers: number
   settings: Record<string, any>
   created_at: string
   updated_at: string

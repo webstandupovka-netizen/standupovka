@@ -78,7 +78,6 @@ export async function PATCH(
       'stream_end_time',
       'is_live',
       'is_active',
-      'max_concurrent_viewers',
       'price',
       'currency'
     ]

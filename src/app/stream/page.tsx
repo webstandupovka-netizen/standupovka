@@ -29,7 +29,6 @@ interface StreamData {
   poster_url?: string
   is_live: boolean
   is_active: boolean
-  max_concurrent_viewers: number
 }
 
 interface PaymentData {
