@@ -21,13 +21,14 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
             {error === 'auth_callback_error' && (
               <>
-                <strong>Ошибка входа:</strong> Не удалось завершить процесс аутентификации. 
-                Попробуйте войти снова или обратитесь в поддержку.
+                <strong>Eroare de autentificare:</strong> Nu s-a putut finaliza procesul de autentificare. 
+                Este posibil să aveți un stream deschis pe alt dispozitiv - închideți-l și încercați din nou. 
+                Dacă problema persistă, contactați suportul.
               </>
             )}
             {error === 'access_denied' && (
               <>
-                <strong>Доступ запрещен:</strong> Вход был отменен или произошла ошибка.
+                <strong>Acces interzis:</strong> Autentificarea a fost anulată sau a apărut o eroare.
               </>
             )}
           </div>
