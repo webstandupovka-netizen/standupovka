@@ -17,9 +17,14 @@ export function Footer() {
                 <span className="text-gray-200 font-bold text-xs md:text-sm uppercase">LIVE</span>
               </div>
             </div>
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-6 text-center sm:text-left">
-              <span className="text-white text-xs md:text-sm">Privacy policy</span>
-              <span className="text-white text-xs md:text-sm">Terms & Conditions</span>
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-6 text-center sm:text-left items-center">
+              <Link href="/privacy" className="text-white text-xs md:text-sm hover:text-[#10C23F] transition-colors">
+                Privacy policy
+              </Link>
+              <Link href="/terms" className="text-white text-xs md:text-sm hover:text-[#10C23F] transition-colors">
+                Terms & Conditions
+              </Link>
+              <img src="/visa-maib.webp" alt="VISA MAIB" className="h-6 md:h-8 ml-2" />
             </div>
           </div>
         </div>
