@@ -135,7 +135,7 @@ export default function PrivacyPolicyPage() {
               exercitarea drepturilor dumneavoastră, ne puteți contacta la:
             </p>
             <div className="mt-4 p-4 bg-[#1A1A1A] rounded-lg border border-[#333333]">
-              <p><strong>Email:</strong> privacy@standupovka.md</p>
+              <p><strong>Email:</strong> standupovkaclub@gmail.com</p>
               <p><strong>Adresa:</strong> Chișinău, Republica Moldova</p>
             </div>
           </section>

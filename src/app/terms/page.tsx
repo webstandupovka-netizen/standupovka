@@ -182,8 +182,8 @@ export default function TermsAndConditionsPage() {
               Pentru întrebări despre acești Termeni și Condiții, ne puteți contacta la:
             </p>
             <div className="mt-4 p-4 bg-[#1A1A1A] rounded-lg border border-[#333333]">
-              <p><strong>Email:</strong> legal@standupovka.md</p>
-              <p><strong>Suport:</strong> support@standupovka.md</p>
+              <p><strong>Email:</strong>standupovkaclub@gmail.com</p>
+              <p><strong>Suport:</strong>standupovkaclub@gmail.com</p>
               <p><strong>Adresa:</strong> Chișinău, Republica Moldova</p>
             </div>
           </section>
