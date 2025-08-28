@@ -100,6 +100,22 @@ export class MAIBPaymentService {
     this.projectId = process.env.MAIB_PROJECT_ID!
     this.projectSecret = process.env.MAIB_PROJECT_SECRET!
     this.signatureKey = process.env.MAIB_SIGNATURE_KEY!
+    
+    console.log('🔧 MAIB Service initialized:', {
+      apiUrl: this.apiUrl,
+      projectId: this.projectId ? `${this.projectId.slice(0, 8)}...` : 'MISSING',
+      projectSecret: this.projectSecret ? 'SET' : 'MISSING',
+      signatureKey: this.signatureKey ? 'SET' : 'MISSING'
+    })
+    
+    if (!this.projectId || !this.projectSecret || !this.signatureKey) {
+      console.error('❌ MAIB configuration missing:', {
+        projectId: !!this.projectId,
+        projectSecret: !!this.projectSecret,
+        signatureKey: !!this.signatureKey
+      })
+      throw new Error('MAIB configuration is incomplete')
+    }
   }
 
   private generateSignature(data: string): string {
@@ -110,6 +126,8 @@ export class MAIBPaymentService {
   }
 
   private async generateAccessToken(): Promise<string> {
+    console.log('🔑 Generating MAIB access token...')
+    
     const response = await fetch(`${this.apiUrl}/generate-token`, {
       method: 'POST',
       headers: {
@@ -121,19 +139,30 @@ export class MAIBPaymentService {
       })
     })
 
+    console.log('🔑 Token generation response status:', response.status, response.statusText)
+
     if (!response.ok) {
-      throw new Error(`Token generation failed: ${response.statusText}`)
+      const errorText = await response.text()
+      console.error('❌ Token generation failed:', {
+        status: response.status,
+        statusText: response.statusText,
+        body: errorText
+      })
+      throw new Error(`Token generation failed: ${response.statusText} - ${errorText}`)
     }
 
     const data: MAIBTokenResponse = await response.json()
+    console.log('🔑 Token generation response:', data)
     
     if (!data.ok || !data.result) {
+      console.error('❌ Token generation failed - invalid response:', data)
       throw new Error(`Token generation failed: ${data.errors?.[0]?.errorMessage || 'Unknown error'}`)
     }
 
     this.accessToken = data.result.accessToken
     this.tokenExpiresAt = Date.now() + (data.result.expiresIn * 1000) - 30000 // 30 seconds buffer
     
+    console.log('✅ Access token generated successfully')
     return this.accessToken
   }
 
@@ -170,6 +199,11 @@ export class MAIBPaymentService {
       failUrl: request.failUrl
     }
 
+    console.log('🔄 MAIB Payment Request:', {
+      url: `${this.apiUrl}/pay`,
+      data: paymentData
+    })
+
     const headers = await this.getAuthHeaders()
     const response = await fetch(`${this.apiUrl}/pay`, {
       method: 'POST',
@@ -177,11 +211,20 @@ export class MAIBPaymentService {
       body: JSON.stringify(paymentData)
     })
 
+    console.log('📡 MAIB Response Status:', response.status, response.statusText)
+
     if (!response.ok) {
-      throw new Error(`MAIB payment creation failed: ${response.statusText}`)
+      const errorText = await response.text()
+      console.error('❌ MAIB API Error Response:', {
+        status: response.status,
+        statusText: response.statusText,
+        body: errorText
+      })
+      throw new Error(`MAIB payment creation failed: ${response.statusText} - ${errorText}`)
     }
 
     const data: MAIBPaymentResponse = await response.json()
+    console.log('✅ MAIB Payment Response:', data)
     return data
   }
 

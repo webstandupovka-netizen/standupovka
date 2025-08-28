@@ -1,4 +1,4 @@
-// types/database.ts
+s// types/database.ts
 export interface Database {
   public: {
     Tables: {
