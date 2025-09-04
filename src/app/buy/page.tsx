@@ -29,6 +29,7 @@ function BuyPageInner() {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [hasAccess, setHasAccess] = useState(false)
+  const [agreedToTerms, setAgreedToTerms] = useState(false)
   
   const supabase = createClient()
   const streamId = searchParams.get('streamId')
@@ -349,10 +350,30 @@ function BuyPageInner() {
                    </div>
                  </div>
 
+                 {/* Чекбокс согласия с условиями */}
+                 <div className="flex items-start gap-3">
+                   <input
+                     type="checkbox"
+                     id="terms-agreement"
+                     checked={agreedToTerms}
+                     onChange={(e) => setAgreedToTerms(e.target.checked)}
+                     className="mt-1 w-4 h-4 text-red-600 bg-gray-700 border-gray-600 rounded focus:outline-none"
+                   />
+                   <label htmlFor="terms-agreement" className="text-gray-400 text-xs leading-relaxed cursor-pointer">
+                     Sunt de acord cu{' '}
+                     <Link href="/terms" className="text-red-400 hover:text-red-300 underline">
+                       termenii și condițiile
+                     </Link>
+                     {' '}și{' '}
+                     <Link href="/privacy" className="text-red-400 hover:text-red-300 underline">
+                       politica de confidențialitate
+                     </Link>
+                   </label>
+                 </div>
                  {/* Кнопка оплаты */}
                   <button 
                     onClick={handlePayment}
-                    disabled={isLoading}
+                    disabled={isLoading || !agreedToTerms}
                     className="bg-red-600 hover:bg-red-700 transition-colors rounded-xl px-4 md:px-6 py-2.5 md:py-3 cursor-pointer w-full disabled:opacity-50"
                   >
                     <div className="flex items-center justify-between">
@@ -373,11 +394,6 @@ function BuyPageInner() {
                       </div>
                     </div>
                   </button>
-
-                 {/* Условия использования */}
-                 <p className="text-gray-400 text-xs text-center leading-relaxed">
-                   Apăsând „Plătește", ești de acord cu termenii și condițiile de utilizare
-                 </p>
                </div>
 
 
