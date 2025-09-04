@@ -182,7 +182,8 @@ export class MAIBPaymentService {
   }
 
   async createPayment(request: MAIBPaymentRequest): Promise<MAIBPaymentResponse> {
-    const paymentData = {
+    // Очищаем данные от undefined/null значений
+    const paymentData: any = {
       amount: request.amount,
       currency: request.currency,
       clientIp: request.clientIp,
@@ -190,13 +191,21 @@ export class MAIBPaymentService {
       description: request.description,
       clientName: request.clientName,
       email: request.email,
-      phone: request.phone,
       orderId: request.orderId,
-      delivery: request.delivery,
-      items: request.items,
       callbackUrl: request.callbackUrl,
       okUrl: request.okUrl,
       failUrl: request.failUrl
+    }
+
+    // Добавляем только определенные поля
+    if (request.phone) {
+      paymentData.phone = request.phone
+    }
+    if (request.delivery) {
+      paymentData.delivery = request.delivery
+    }
+    if (request.items) {
+      paymentData.items = request.items
     }
 
     console.log('🔄 MAIB Payment Request:', {

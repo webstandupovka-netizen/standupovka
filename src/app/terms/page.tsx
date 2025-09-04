@@ -9,188 +9,99 @@ export default function TermsAndConditionsPage() {
   return (
     <div className="min-h-screen bg-[#0A0A0A] text-[#F2F2F2]">
       <div className="container mx-auto px-4 py-12 max-w-4xl">
-        <h1 className="text-4xl font-bold mb-8 text-[#10C23F]">Termeni și Condiții</h1>
+        <h1 className="text-4xl font-bold mb-8 text-[#10C23F]">Termeni și Condiții – www.standupovka.live</h1>
         
         <div className="space-y-8 text-[#CCCCCC] leading-relaxed">
+          <p className="text-lg">
+            Prezenții Termeni și Condiții de utilizare a platformei online www.standupovka.live sunt aplicabile accesării și achiziționării biletelor pentru vizionarea concertelor transmise în direct de compania SRL "STANDUPER LOL" prin intermediul site-ului.
+            Pentru folosirea în bune condiții a site-ului, vă recomandăm familiarizarea cu atenție a Termenilor și Condițiilor prezentate. Ne rezervăm dreptul de a face modificări ale acestor prevederi, fără o notificare prealabilă.
+          </p>
+
           <section>
-            <h2 className="text-2xl font-semibold mb-4 text-[#F2F2F2]">1. Acceptarea Termenilor</h2>
+            <h2 className="text-2xl font-semibold mb-4 text-[#F2F2F2]">1. DISPOZIȚII GENERALE</h2>
             <p>
-              Prin accesarea și utilizarea platformei Standupovka ("Serviciul"), acceptați să fiți 
-              obligați de acești Termeni și Condiții. Dacă nu sunteți de acord cu acești termeni, 
-              vă rugăm să nu utilizați Serviciul.
+              Acest site este deținut de SRL "STANDUPER LOL". La înregistrarea comenzii de bilete pentru acces la stream, Cumpărătorul acceptă Termenii și Condițiile de prestare a serviciilor care sunt bazați pe legislația Republicii Moldova (în continuare – Termeni și Condiții).
+            </p>
+            <p className="mt-4">
+              Utilizarea website-ului presupune acceptarea Termenilor și Condițiilor propuse de către SRL "STANDUPER LOL", în conformitate cu Legea nr.284/2004 privind Comerțul Electronic. Relațiile dintre client și prestator sunt stabilite în baza Legii nr.105/2003 cu privire la Protecția drepturilor consumatorului și a altor acte normative aplicabile.
+            </p>
+            <p className="mt-4">
+              Prestatorul își rezervă dreptul de a modifica Termenii și Condițiile, iar Cumpărătorul este obligat să monitorizeze modificările.
             </p>
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-4 text-[#F2F2F2]">2. Descrierea Serviciului</h2>
+            <h2 className="text-2xl font-semibold mb-4 text-[#F2F2F2]">2. PROTECȚIA DATELOR CU CARACTER PERSONAL</h2>
             <p>
-              Standupovka este o platformă de streaming care oferă acces la spectacole de stand-up 
-              comedy în direct și înregistrate. Serviciul permite utilizatorilor să achiziționeze 
-              bilete pentru spectacole și să le vizioneze online.
+              Prin utilizarea site-ului www.standupovka.live, sunteți de acord în mod automat cu colectarea și prelucrarea datelor cu caracter personal, necesare pentru procesarea comenzilor, confirmarea și acordarea accesului la stream.
+            </p>
+            <p className="mt-4">
+              Datele personale sunt prelucrate doar în scopuri legitime – furnizarea accesului la concertele live, promoții, analize statistice, cookies și trimiterea notificărilor/newsletter.
+            </p>
+            <p className="mt-4">
+              Informațiile cu caracter personal sunt stocate doar pentru perioada necesară și în conformitate cu Legea nr.133/2011 privind protecția datelor cu caracter personal.
+            </p>
+            <p className="mt-4">
+              Noi folosim măsuri de securitate comerciale pentru protecția datelor, dar transmiterea pe internet nu poate fi garantată 100%. Cumpărătorul își asumă responsabilitatea pentru furnizarea datelor.
             </p>
           </section>
 
           <section>
-            <h2 className="text-2xl font-semibold mb-4 text-[#F2F2F2]">3. Înregistrarea Contului</h2>
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-xl font-medium mb-2 text-[#10C23F]">3.1 Cerințe pentru Cont</h3>
-                <ul className="list-disc list-inside space-y-2 ml-4">
-                  <li>Trebuie să aveți cel puțin 18 ani pentru a crea un cont</li>
-                  <li>Trebuie să furnizați o adresă de email validă</li>
-                  <li>Sunteți responsabil pentru securitatea contului dumneavoastră</li>
-                </ul>
-              </div>
-              
-              <div>
-                <h3 className="text-xl font-medium mb-2 text-[#10C23F]">3.2 Responsabilități</h3>
-                <ul className="list-disc list-inside space-y-2 ml-4">
-                  <li>Să mențineți confidențialitatea informațiilor de autentificare</li>
-                  <li>Să ne notificați imediat despre orice utilizare neautorizată</li>
-                  <li>Să furnizați informații exacte și actualizate</li>
-                </ul>
-              </div>
+            <h2 className="text-2xl font-semibold mb-4 text-[#F2F2F2]">3. ÎNREGISTRAREA ȘI ACHITAREA BILETELOR</h2>
+            <p>
+              Achitarea comenzilor este posibilă exclusiv cu cardul de plată. După efectuarea plății, Cumpărătorul va primi pe email confirmarea și datele de acces pentru vizionarea stream-ului.
+            </p>
+            <p className="mt-4">
+              Plata online se face în condiții de siguranță maximă folosind cardurile bancare care permit tranzacții online. Procesatorul de plăți utilizează standardul de securitate 3D-Secure.
+            </p>
+            <p className="mt-4">
+              Rambursarea mijloacelor bănești se efectuează doar pe cardul de plată care a fost utilizat pentru achiziție.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-2xl font-semibold mb-4 text-[#F2F2F2]">4. ACCESUL LA STREAM</h2>
+            <p>
+              După confirmarea plății, Cumpărătorul primește un link unic sau date de acces pentru vizionarea concertului live.
+            </p>
+            <p className="mt-4">
+              Accesul este valabil doar pentru perioada evenimentului, conform programului afișat pe site. După încheierea concertului, linkul nu mai este funcțional.
+            </p>
+            <p className="mt-4">
+              Datele de acces nu trebuie transmise către alte persoane. SRL "STANDUPER LOL" își rezervă dreptul de a bloca accesul în cazul detectării utilizării abuzive.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-2xl font-semibold mb-4 text-[#F2F2F2]">5. DREPTUL LA RETUR</h2>
+            <p>
+              Conform Legii nr.105-XV/2003 privind protecția consumatorilor, biletele achiziționate pentru evenimente cu dată fixă (streamuri live) nu pot fi returnate sau rambursate, decât în cazul anulării evenimentului de către organizator.
+            </p>
+            <p className="mt-4">
+              În cazul anulării concertului, mijloacele bănești vor fi returnate integral pe cardul utilizat la achiziție.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-2xl font-semibold mb-4 text-[#F2F2F2]">6. POLITICA DE CONFIDENȚIALITATE</h2>
+            <p>
+              În conformitate cu Legea nr.133/2011 privind protecția datelor cu caracter personal, colectăm doar datele necesare: nume, prenume, adresă de email și număr de telefon.
+            </p>
+            <p className="mt-4">
+              Aceste date sunt utilizate exclusiv pentru procesarea comenzilor, acordarea accesului la stream și informarea consumatorului. Datele nu vor fi comercializate sau divulgate terților, cu excepția cazurilor prevăzute de lege.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-2xl font-semibold mb-4 text-[#F2F2F2]">7. DATELE DE CONTACT</h2>
+            <div className="bg-[#1A1A1A] p-6 rounded-lg border border-[#333333]">
+              <p><strong>Denumirea juridică a companiei:</strong> SRL "STANDUPER LOL"</p>
+              <p className="mt-2"><strong>IDNO:</strong> 1022600022959</p>
+              <p className="mt-2"><strong>Adresa juridică:</strong> str. Prof. Ion Dumeniuc 24, ap. 70, șos. Hîncești 61, Chișinău, Republica Moldova</p>
+              <p className="mt-2"><strong>Telefon de contact:</strong> +373 608 58551</p>
+              <p className="mt-2"><strong>Email de contact:</strong> standupovka@gmail.com</p>
             </div>
           </section>
-
-          <section>
-            <h2 className="text-2xl font-semibold mb-4 text-[#F2F2F2]">4. Achiziții și Plăți</h2>
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-xl font-medium mb-2 text-[#10C23F]">4.1 Procesarea Plăților</h3>
-                <ul className="list-disc list-inside space-y-2 ml-4">
-                  <li>Toate plățile sunt procesate securizat prin MAIB</li>
-                  <li>Prețurile sunt afișate în MDL și includ toate taxele aplicabile</li>
-                  <li>Plata trebuie finalizată înainte de începerea spectacolului</li>
-                </ul>
-              </div>
-              
-              <div>
-                <h3 className="text-xl font-medium mb-2 text-[#10C23F]">4.2 Politica de Rambursare</h3>
-                <ul className="list-disc list-inside space-y-2 ml-4">
-                  <li>Rambursările sunt disponibile până cu 24 de ore înainte de spectacol</li>
-                  <li>În caz de anulare din partea noastră, se oferă rambursare completă</li>
-                  <li>Problemele tehnice majore pot justifica rambursări parțiale</li>
-                  <li>Rambursările sunt procesate în 5-10 zile lucrătoare</li>
-                </ul>
-              </div>
-            </div>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-semibold mb-4 text-[#F2F2F2]">5. Utilizarea Serviciului</h2>
-            <div className="space-y-4">
-              <div>
-                <h3 className="text-xl font-medium mb-2 text-[#10C23F]">5.1 Utilizare Permisă</h3>
-                <ul className="list-disc list-inside space-y-2 ml-4">
-                  <li>Vizionarea spectacolelor pentru care ați achitat</li>
-                  <li>Utilizarea pe un singur dispozitiv la un moment dat</li>
-                  <li>Utilizarea pentru scopuri personale, non-comerciale</li>
-                </ul>
-              </div>
-              
-              <div>
-                <h3 className="text-xl font-medium mb-2 text-[#10C23F]">5.2 Utilizare Interzisă</h3>
-                <ul className="list-disc list-inside space-y-2 ml-4">
-                  <li>Înregistrarea, copierea sau redistribuirea conținutului</li>
-                  <li>Partajarea contului cu alte persoane</li>
-                  <li>Utilizarea pe multiple dispozitive simultan</li>
-                  <li>Încercarea de a ocoli măsurile de securitate</li>
-                  <li>Utilizarea pentru scopuri comerciale fără autorizație</li>
-                </ul>
-              </div>
-            </div>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-semibold mb-4 text-[#F2F2F2]">6. Proprietatea Intelectuală</h2>
-            <p className="mb-4">
-              Tot conținutul disponibil pe platformă, inclusiv spectacolele, logo-urile, 
-              textele și designul, este protejat de drepturile de autor și alte drepturi 
-              de proprietate intelectuală.
-            </p>
-            <ul className="list-disc list-inside space-y-2 ml-4">
-              <li>Nu aveți dreptul să copiați, modificați sau distribuiți conținutul</li>
-              <li>Licența de vizionare este limitată și non-transferabilă</li>
-              <li>Încălcarea drepturilor de autor poate duce la suspendarea contului</li>
-            </ul>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-semibold mb-4 text-[#F2F2F2]">7. Disponibilitatea Serviciului</h2>
-            <p className="mb-4">
-              Ne străduim să menținem serviciul disponibil 24/7, dar nu putem garanta 
-              o disponibilitate de 100%. Serviciul poate fi temporar indisponibil din cauza:
-            </p>
-            <ul className="list-disc list-inside space-y-2 ml-4">
-              <li>Mentenanță programată</li>
-              <li>Probleme tehnice neprevăzute</li>
-              <li>Probleme cu furnizorii de servicii terți</li>
-              <li>Forță majoră</li>
-            </ul>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-semibold mb-4 text-[#F2F2F2]">8. Limitarea Responsabilității</h2>
-            <p className="mb-4">
-              În măsura permisă de lege, Standupovka nu va fi responsabilă pentru:
-            </p>
-            <ul className="list-disc list-inside space-y-2 ml-4">
-              <li>Daune indirecte, incidentale sau consecvente</li>
-              <li>Pierderea de date sau profit</li>
-              <li>Întreruperi ale serviciului</li>
-              <li>Probleme cauzate de dispozitivul sau conexiunea dumneavoastră</li>
-            </ul>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-semibold mb-4 text-[#F2F2F2]">9. Suspendarea și Închiderea Contului</h2>
-            <p className="mb-4">
-              Ne rezervăm dreptul să suspendăm sau să închidem contul dumneavoastră în 
-              următoarele situații:
-            </p>
-            <ul className="list-disc list-inside space-y-2 ml-4">
-              <li>Încălcarea acestor Termeni și Condiții</li>
-              <li>Activitate frauduloasă sau suspectă</li>
-              <li>Utilizarea neautorizată a serviciului</li>
-              <li>Solicitarea dumneavoastră de închidere a contului</li>
-            </ul>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-semibold mb-4 text-[#F2F2F2]">10. Modificări ale Termenilor</h2>
-            <p>
-              Ne rezervăm dreptul să modificăm acești Termeni și Condiții în orice moment. 
-              Modificările vor fi comunicate prin email sau prin afișarea unei notificări 
-              pe platformă. Continuarea utilizării serviciului după modificări constituie 
-              acceptarea noilor termeni.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-semibold mb-4 text-[#F2F2F2]">11. Legea Aplicabilă</h2>
-            <p>
-              Acești Termeni și Condiții sunt guvernați de legile Republicii Moldova. 
-              Orice dispute vor fi rezolvate în instanțele competente din Chișinău, 
-              Republica Moldova.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-semibold mb-4 text-[#F2F2F2]">12. Contact</h2>
-            <p>
-              Pentru întrebări despre acești Termeni și Condiții, ne puteți contacta la:
-            </p>
-            <div className="mt-4 p-4 bg-[#1A1A1A] rounded-lg border border-[#333333]">
-              <p><strong>Email:</strong>standupovkaclub@gmail.com</p>
-              <p><strong>Suport:</strong>standupovkaclub@gmail.com</p>
-              <p><strong>Adresa:</strong> Chișinău, Republica Moldova</p>
-            </div>
-          </section>
-
-          <div className="mt-12 pt-8 border-t border-[#333333] text-sm text-[#888888]">
-            <p>Ultima actualizare: {new Date().toLocaleDateString('ro-RO', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-          </div>
         </div>
       </div>
     </div>
