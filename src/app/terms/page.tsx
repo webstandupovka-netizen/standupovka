@@ -98,6 +98,7 @@ export default function TermsAndConditionsPage() {
               <p><strong>Denumirea juridică a companiei:</strong> SRL "STANDUPER LOL"</p>
               <p className="mt-2"><strong>IDNO:</strong> 1022600022959</p>
               <p className="mt-2"><strong>Adresa juridică:</strong> str. Prof. Ion Dumeniuc 24, ap. 70, șos. Hîncești 61, Chișinău, Republica Moldova</p>
+              <p className="mt-2"><strong>Adresa Fizica:</strong> șos. Hîncești 61</p>
               <p className="mt-2"><strong>Telefon de contact:</strong> +373 608 58551</p>
               <p className="mt-2"><strong>Email de contact:</strong> standupovka@gmail.com</p>
             </div>
