@@ -18,18 +18,29 @@ export const createProxyFetch = (proxyConfig?: ProxyConfig) => {
 
   // Для Node.js окружения (серверная сторона)
   if (typeof window === 'undefined') {
-    // Используем https-proxy-agent для Node.js
-    const { HttpsProxyAgent } = require('https-proxy-agent')
-    const agent = new HttpsProxyAgent(proxyConfig.url)
-    
-    return (url: string | URL | Request, init?: RequestInit) => {
-      const requestInit = {
-        ...init,
-        // @ts-ignore - Node.js specific property
-        agent: agent
-      }
+    // Используем node-fetch с https-proxy-agent для Node.js
+    try {
+      const nodeFetch = require('node-fetch')
+      const { HttpsProxyAgent } = require('https-proxy-agent')
+      const { HttpProxyAgent } = require('http-proxy-agent')
       
-      return fetch(url, requestInit)
+      // Определяем тип агента на основе URL прокси
+      const proxyUrl = new URL(proxyConfig.url)
+      const agent = proxyUrl.protocol === 'https:' 
+        ? new HttpsProxyAgent(proxyConfig.url)
+        : new HttpProxyAgent(proxyConfig.url)
+      
+      return async (url: string | URL | Request, init?: RequestInit): Promise<Response> => {
+        const options = {
+          ...init,
+          agent: agent
+        }
+        
+        return nodeFetch(url, options)
+      }
+    } catch (error) {
+      console.warn('node-fetch or proxy agents not available, falling back to native fetch')
+      return fetch
     }
   }
   
