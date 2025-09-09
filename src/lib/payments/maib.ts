@@ -1,6 +1,9 @@
 // lib/payments/maib.ts
 import crypto from 'crypto'
-import { maibFetch } from '../http-agent'
+import https from 'https'
+import { URL } from 'url'
+import { HttpsProxyAgent } from 'https-proxy-agent'
+import { config } from '../config'
 
 export interface MAIBPaymentRequest {
   amount: number
@@ -119,6 +122,18 @@ export class MAIBPaymentService {
     }
   }
 
+  private createProxyAgent(): HttpsProxyAgent<string> | undefined {
+    const fixieUrl = config.proxy.url;
+    if (fixieUrl && config.proxy.enabled) {
+      console.log('Using Fixie proxy for MAIB requests:', {
+        proxyUrl: fixieUrl.replace(/:\/\/[^:]+:[^@]+@/, '://***:***@'),
+        timestamp: new Date().toISOString()
+      });
+      return new HttpsProxyAgent(fixieUrl);
+    }
+    return undefined;
+  }
+
   private generateSignature(data: string): string {
     return crypto
       .createHmac('sha256', this.signatureKey)
@@ -127,44 +142,83 @@ export class MAIBPaymentService {
   }
 
   private async generateAccessToken(): Promise<string> {
+    const tokenData = {
+      projectId: this.projectId,
+      projectSecret: this.projectSecret
+    }
+
     console.log('🔑 Generating MAIB access token...')
-    
-    const response = await maibFetch(`${this.apiUrl}/generate-token`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        projectId: this.projectId,
-        projectSecret: this.projectSecret
+
+    return new Promise((resolve, reject) => {
+      const url = new URL(`${this.apiUrl}/generate-token`)
+      const postData = JSON.stringify(tokenData)
+      const agent = this.createProxyAgent()
+
+      const options: https.RequestOptions = {
+        hostname: url.hostname,
+        port: url.port || 443,
+        path: url.pathname,
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(postData)
+        },
+        agent: agent
+      }
+
+      const req = https.request(options, (res) => {
+        let data = ''
+        res.on('data', (chunk) => {
+          data += chunk
+        })
+
+        res.on('end', () => {
+          console.log('🔑 Token generation response status:', res.statusCode, res.statusMessage)
+
+          if (res.statusCode !== 200) {
+            console.error('❌ Token generation failed:', {
+              status: res.statusCode,
+              statusMessage: res.statusMessage,
+              body: data
+            })
+            reject(new Error(`Token generation failed: ${res.statusMessage} - ${data}`))
+            return
+          }
+
+          try {
+            const tokenResponse: MAIBTokenResponse = JSON.parse(data)
+            console.log('🔑 Token generation response:', tokenResponse)
+            
+            if (!tokenResponse.ok || !tokenResponse.result) {
+              console.error('❌ Token generation failed - invalid response:', tokenResponse)
+              reject(new Error(`Token generation failed: ${tokenResponse.errors?.[0]?.errorMessage || 'Unknown error'}`))
+              return
+            }
+
+            this.accessToken = tokenResponse.result.accessToken
+            this.tokenExpiresAt = Date.now() + (tokenResponse.result.expiresIn * 1000) - 30000 // 30 seconds buffer
+            
+            console.log('✅ Access token generated successfully')
+            resolve(this.accessToken)
+          } catch (error) {
+            reject(new Error(`Failed to parse token response: ${error}`))
+          }
+        })
       })
+
+      req.on('error', (error) => {
+        console.error('❌ MAIB Token Request Error:', error)
+        reject(error)
+      })
+
+      req.setTimeout(15000, () => {
+        req.destroy()
+        reject(new Error('Token request timeout'))
+      })
+
+      req.write(postData)
+      req.end()
     })
-
-    console.log('🔑 Token generation response status:', response.status, response.statusText)
-
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.error('❌ Token generation failed:', {
-        status: response.status,
-        statusText: response.statusText,
-        body: errorText
-      })
-      throw new Error(`Token generation failed: ${response.statusText} - ${errorText}`)
-    }
-
-    const data: MAIBTokenResponse = await response.json()
-    console.log('🔑 Token generation response:', data)
-    
-    if (!data.ok || !data.result) {
-      console.error('❌ Token generation failed - invalid response:', data)
-      throw new Error(`Token generation failed: ${data.errors?.[0]?.errorMessage || 'Unknown error'}`)
-    }
-
-    this.accessToken = data.result.accessToken
-    this.tokenExpiresAt = Date.now() + (data.result.expiresIn * 1000) - 30000 // 30 seconds buffer
-    
-    console.log('✅ Access token generated successfully')
-    return this.accessToken
   }
 
   private async getValidAccessToken(): Promise<string> {
@@ -215,27 +269,66 @@ export class MAIBPaymentService {
     })
 
     const headers = await this.getAuthHeaders()
-    const response = await maibFetch(`${this.apiUrl}/pay`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(paymentData)
-    })
+    const postData = JSON.stringify(paymentData)
 
-    console.log('📡 MAIB Response Status:', response.status, response.statusText)
+    return new Promise((resolve, reject) => {
+      const url = new URL(`${this.apiUrl}/pay`)
+      const agent = this.createProxyAgent()
 
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.error('❌ MAIB API Error Response:', {
-        status: response.status,
-        statusText: response.statusText,
-        body: errorText
+      const options: https.RequestOptions = {
+        hostname: url.hostname,
+        port: url.port || 443,
+        path: url.pathname,
+        method: 'POST',
+        headers: {
+          ...headers,
+          'Content-Length': Buffer.byteLength(postData)
+        },
+        agent: agent
+      }
+
+      const req = https.request(options, (res) => {
+        let data = ''
+        res.on('data', (chunk) => {
+          data += chunk
+        })
+
+        res.on('end', () => {
+          console.log('📡 MAIB Response Status:', res.statusCode, res.statusMessage)
+
+          if (res.statusCode !== 200) {
+            console.error('❌ MAIB API Error Response:', {
+              status: res.statusCode,
+              statusMessage: res.statusMessage,
+              body: data
+            })
+            reject(new Error(`MAIB payment creation failed: ${res.statusMessage} - ${data}`))
+            return
+          }
+
+          try {
+            const paymentResponse: MAIBPaymentResponse = JSON.parse(data)
+            console.log('✅ MAIB Payment Response:', paymentResponse)
+            resolve(paymentResponse)
+          } catch (error) {
+            reject(new Error(`Failed to parse payment response: ${error}`))
+          }
+        })
       })
-      throw new Error(`MAIB payment creation failed: ${response.statusText} - ${errorText}`)
-    }
 
-    const data: MAIBPaymentResponse = await response.json()
-    console.log('✅ MAIB Payment Response:', data)
-    return data
+      req.on('error', (error) => {
+        console.error('❌ MAIB Payment Request Error:', error)
+        reject(error)
+      })
+
+      req.setTimeout(15000, () => {
+        req.destroy()
+        reject(new Error('Payment request timeout'))
+      })
+
+      req.write(postData)
+      req.end()
+    })
   }
 
   async getPaymentStatus(payId: string): Promise<{
@@ -245,38 +338,73 @@ export class MAIBPaymentService {
     currency?: string
   }> {
     const headers = await this.getAuthHeaders()
-    const response = await maibFetch(`${this.apiUrl}/pay-info/${payId}`, {
-      method: 'GET',
-      headers
-    })
 
-    if (!response.ok) {
-      throw new Error('Failed to get payment status')
-    }
+    return new Promise((resolve, reject) => {
+      const url = new URL(`${this.apiUrl}/pay-info/${payId}`)
+      const agent = this.createProxyAgent()
 
-    const data = await response.json()
-    
-    // Мапим статусы MAIB на наши внутренние статусы
-    const maibStatus = data.result?.status
-    const statusCode = data.result?.statusCode
-    let mappedStatus = 'pending'
-    
-    if (maibStatus === 'OK' && statusCode === '000') {
-      mappedStatus = 'completed'
-    } else if (maibStatus === 'FAILED' || maibStatus === 'DECLINED' || maibStatus === 'TIMEOUT') {
-      mappedStatus = 'failed'
-    } else if (maibStatus === 'CREATED' || maibStatus === 'PENDING') {
-      mappedStatus = 'pending'
-    } else if (!maibStatus) {
-      mappedStatus = 'unknown'
-    }
-    
-    return {
-      status: mappedStatus,
-      payId: data.result?.payId,
-      amount: data.result?.amount,
-      currency: data.result?.currency
-    }
+      const options: https.RequestOptions = {
+        hostname: url.hostname,
+        port: url.port || 443,
+        path: url.pathname,
+        method: 'GET',
+        headers: headers,
+        agent: agent
+      }
+
+      const req = https.request(options, (res) => {
+        let data = ''
+        res.on('data', (chunk) => {
+          data += chunk
+        })
+
+        res.on('end', () => {
+          if (res.statusCode !== 200) {
+            reject(new Error('Failed to get payment status'))
+            return
+          }
+
+          try {
+             const statusResponse = JSON.parse(data)
+     
+             // Мапим статусы MAIB на наши внутренние статусы
+             const maibStatus = statusResponse.result?.status
+             const statusCode = statusResponse.result?.statusCode
+             let mappedStatus = 'pending'
+     
+             if (maibStatus === 'OK' && statusCode === '000') {
+               mappedStatus = 'completed'
+             } else if (maibStatus === 'FAILED' || maibStatus === 'DECLINED' || maibStatus === 'TIMEOUT') {
+               mappedStatus = 'failed'
+             } else if (maibStatus === 'CREATED' || maibStatus === 'PENDING') {
+               mappedStatus = 'pending'
+             } else if (!maibStatus) {
+               mappedStatus = 'unknown'
+             }
+     
+             resolve({
+               status: mappedStatus,
+               payId: statusResponse.result?.payId,
+               amount: statusResponse.result?.amount,
+               currency: statusResponse.result?.currency
+             })
+           } catch (error) {
+             reject(new Error(`Failed to parse status response: ${error}`))
+           }
+         })
+       })
+
+       req.on('error', (error) => {
+         reject(error)
+       })
+
+       req.setTimeout(15000, () => {
+         req.destroy()
+         reject(new Error('Status request timeout'))
+       })
+
+       req.end()
+     })
   }
 
   async refundPayment(request: MAIBRefundRequest): Promise<MAIBRefundResponse> {
@@ -290,18 +418,57 @@ export class MAIBPaymentService {
     }
 
     const headers = await this.getAuthHeaders()
-    const response = await maibFetch(`${this.apiUrl}/refund`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(refundData)
+    const postData = JSON.stringify(refundData)
+
+    return new Promise((resolve, reject) => {
+      const url = new URL(`${this.apiUrl}/refund`)
+      const agent = this.createProxyAgent()
+
+      const options: https.RequestOptions = {
+        hostname: url.hostname,
+        port: url.port || 443,
+        path: url.pathname,
+        method: 'POST',
+        headers: {
+          ...headers,
+          'Content-Length': Buffer.byteLength(postData)
+        },
+        agent: agent
+      }
+
+      const req = https.request(options, (res) => {
+        let data = ''
+        res.on('data', (chunk) => {
+          data += chunk
+        })
+
+        res.on('end', () => {
+          if (res.statusCode !== 200) {
+            reject(new Error(`MAIB refund failed: ${res.statusMessage}`))
+            return
+          }
+
+          try {
+            const refundResponse: MAIBRefundResponse = JSON.parse(data)
+            resolve(refundResponse)
+          } catch (error) {
+            reject(new Error(`Failed to parse refund response: ${error}`))
+          }
+        })
+      })
+
+      req.on('error', (error) => {
+        reject(error)
+      })
+
+      req.setTimeout(15000, () => {
+        req.destroy()
+        reject(new Error('Refund request timeout'))
+      })
+
+      req.write(postData)
+      req.end()
     })
-
-    if (!response.ok) {
-      throw new Error(`MAIB refund failed: ${response.statusText}`)
-    }
-
-    const data: MAIBRefundResponse = await response.json()
-    return data
   }
 
   validateWebhookSignature(payload: string, signature: string): boolean {
