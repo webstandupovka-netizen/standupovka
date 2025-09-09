@@ -37,11 +37,11 @@ function BuyPageInner() {
   const handlePayment = async () => {
     if (!stream) return
     
-    // Проверяем авторизацию пользователя
+    // Verificăm autorizarea utilizatorului
     const { data: { session } } = await supabase.auth.getSession()
     
     if (!session) {
-      // Если пользователь не авторизован, перенаправляем на страницу входа
+      // Dacă utilizatorul nu este autorizat, îl redirecționăm la pagina de conectare
       window.location.href = '/auth/login'
       return
     }
@@ -65,11 +65,11 @@ function BuyPageInner() {
       if (response.ok && (data.payUrl || data.paymentUrl)) {
         window.location.href = data.payUrl || data.paymentUrl
       } else {
-        throw new Error(data.error || 'Ошибка создания платежа')
+        throw new Error(data.error || 'Eroare la crearea plății')
       }
     } catch (error) {
       console.error('Payment error:', error)
-      setError(error instanceof Error ? error.message : 'Ошибка создания платежа')
+      setError(error instanceof Error ? error.message : 'Eroare la crearea plății')
     } finally {
       setIsLoading(false)
     }
@@ -78,17 +78,17 @@ function BuyPageInner() {
   useEffect(() => {
     const fetchStreamData = async () => {
       if (!streamId) {
-        setError('ID стрима не указан')
+        setError('ID-ul transmisiunii nu este specificat')
         setIsLoading(false)
         return
       }
 
       try {
-        // Получаем данные стрима через API
+        // Obținem datele transmisiunii prin API
         const response = await fetch(`/api/stream/${streamId}`)
         
         if (!response.ok) {
-          setError('Стрим не найден или неактивен')
+          setError('Transmisiunea nu a fost găsită sau nu este activă')
           setIsLoading(false)
           return
         }
@@ -96,7 +96,7 @@ function BuyPageInner() {
         const streamData = await response.json()
         setStream(streamData)
 
-        // Проверяем, есть ли у пользователя доступ
+        // Verificăm dacă utilizatorul are acces
         const { data: { session } } = await supabase.auth.getSession()
         
         if (session) {
@@ -114,7 +114,7 @@ function BuyPageInner() {
 
       } catch (error) {
         console.error('Error fetching stream data:', error)
-        setError('Ошибка загрузки данных стрима')
+        setError('Eroare la încărcarea datelor transmisiunii')
       } finally {
         setIsLoading(false)
       }
@@ -157,11 +157,11 @@ function BuyPageInner() {
         <Card className="w-full max-w-md bg-gray-800/50 backdrop-blur-sm border-gray-700/30">
           <CardHeader>
             <CardTitle className="text-white flex items-center gap-2">
-              <Star className="h-5 w-5 text-red-400" />
-              Ошибка
+              <Star className="w-5 h-5 text-red-400" />
+              Eroare
             </CardTitle>
             <CardDescription className="text-gray-300">
-              {error || 'Стрим не найден'}
+              {error || 'Transmisiunea nu a fost găsită'}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -171,11 +171,11 @@ function BuyPageInner() {
                 className="w-full"
               >
                 <Play className="h-4 w-4 mr-2" />
-                Попробовать снова
+                Încearcă din nou
               </Button>
               <Link href="/" className="block">
                 <Button variant="outline" className="w-full border-gray-600 text-white hover:bg-white/10">
-                  На главную
+                  Acasă
                 </Button>
               </Link>
             </div>
@@ -197,17 +197,17 @@ function BuyPageInner() {
             <CardHeader className="text-center">
               <Star className="h-16 w-16 text-yellow-500 mx-auto mb-4" />
               <CardTitle className="text-2xl text-green-400">
-                У вас есть доступ!
+                Aveți acces!
               </CardTitle>
               <CardDescription className="text-gray-300">
-                Вы уже оплатили доступ к стриму
+                Ați plătit deja accesul la transmisiune
               </CardDescription>
             </CardHeader>
             <CardContent>
               <Link href={`/stream/${stream.id}`}>
                 <Button className="w-full bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-black" size="lg">
                   <Play className="h-4 w-4 mr-2" />
-                  Смотреть стрим
+                  Urmărește transmisiunea
                 </Button>
               </Link>
             </CardContent>
@@ -226,9 +226,9 @@ function BuyPageInner() {
           transition={{ duration: 0.5 }}
           className="flex flex-col lg:flex-row gap-8"
         >
-          {/* Левая часть - Информация о событии */}
+          {/* Partea stângă - Informații despre eveniment */}
           <div className="flex-1 space-y-8">
-            {/* Основная информация о событии */}
+            {/* Informații principale despre eveniment */}
             <div className="bg-gray-800/50 rounded-xl p-4 md:p-6 space-y-4 md:space-y-6">
               <div className="space-y-4">
                 <h1 className="text-white font-black text-2xl md:text-4xl lg:text-5xl leading-tight uppercase">
@@ -241,7 +241,7 @@ function BuyPageInner() {
                 </div>
               </div>
 
-              {/* Постер события */}
+              {/* Posterul evenimentului */}
               {stream.poster_url && (
                 <div className="w-full max-w-[600px] h-[250px] md:h-[400px]">
                   <img 
@@ -252,9 +252,9 @@ function BuyPageInner() {
                 </div>
               )}
 
-              {/* Информация о дате и статусе */}
+              {/* Informații despre dată și status */}
               <div className="space-y-4">
-                {/* Дата и время */}
+                {/* Data și ora */}
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-3">
                     <img src="/calendar.svg" alt="Calendar" className="w-6 h-6" />
@@ -271,7 +271,7 @@ function BuyPageInner() {
                   </div>
                 </div>
 
-                {/* Статус */}
+                {/* Status */}
                 <div className="flex items-center gap-3">
                   <div className="flex items-center gap-3">
                     <div className={`w-3 h-3 rounded-full ${
@@ -286,7 +286,7 @@ function BuyPageInner() {
               </div>
             </div>
 
-            {/* Что включено */}
+            {/* Ce este inclus */}
             <div className="bg-gray-800/50 rounded-3xl p-4 md:p-6">
               <h3 className="text-gray-200 font-bold text-sm md:text-base mb-4">Ce este inclus</h3>
               <div className="space-y-2 md:space-y-3">
@@ -306,10 +306,10 @@ function BuyPageInner() {
             </div>
           </div>
 
-          {/* Правая часть - Форма оплаты */}
+          {/* Partea dreaptă - Formularul de plată */}
           <div className="flex-1 max-w-md">
             <div className="bg-gray-800/50 border border-gray-600 rounded-xl p-4 md:p-6 space-y-4 md:space-y-6">
-              {/* Заголовок */}
+              {/* Titlul */}
               <div className="space-y-4">
                 <h2 className="text-white font-bold text-lg md:text-xl">Plata accesului</h2>
                 <div className="flex gap-2">
@@ -318,7 +318,7 @@ function BuyPageInner() {
                 </div>
               </div>
 
-              {/* Информация о стоимости */}
+              {/* Informații despre cost */}
               <div className="bg-gray-800/50 border border-gray-600 rounded-xl p-3 md:p-4 space-y-3">
                 <div className="flex justify-between">
                   <span className="text-gray-200 text-xs md:text-sm">Cost:</span>
@@ -330,12 +330,12 @@ function BuyPageInner() {
                 </div>
               </div>
 
-              {/* Уведомление */}
+              {/* Notificare */}
               <p className="text-gray-200 text-xs md:text-sm">
                 Accesul se activează imediat după efectuarea plății
               </p>
 
-              {/* Способы оплаты */}
+              {/* Modalități de plată */}
                <div className="space-y-3 md:space-y-4">
                  <div className="space-y-2 md:space-y-3">
                    <p className="text-white text-xs md:text-sm font-normal">Pay Online:</p>
@@ -350,7 +350,7 @@ function BuyPageInner() {
                    </div>
                  </div>
 
-                 {/* Чекбокс согласия с условиями */}
+                 {/* Checkbox pentru acordul cu termenii */}
                  <div className="flex items-start gap-3">
                    <input
                      type="checkbox"
@@ -370,7 +370,7 @@ function BuyPageInner() {
                      </Link>
                    </label>
                  </div>
-                 {/* Кнопка оплаты */}
+                 {/* Butonul de plată */}
                   <button 
                     onClick={handlePayment}
                     disabled={isLoading || !agreedToTerms}

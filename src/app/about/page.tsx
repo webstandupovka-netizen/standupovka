@@ -11,44 +11,44 @@ const stats = [
   {
     icon: Users,
     value: '500+',
-    label: 'Довольных зрителей',
-    description: 'Каждое шоу собирает полные залы'
+    label: 'Spectatori mulțumiți',
+    description: 'Fiecare show adună săli pline'
   },
   {
     icon: Mic,
     value: '15+',
-    label: 'Выступлений',
-    description: 'Регулярные шоу каждый месяц'
+    label: 'Spectacole',
+    description: 'Show-uri regulate în fiecare lună'
   },
   {
     icon: Trophy,
     value: '3',
-    label: 'Звездных комика',
-    description: 'Лучшие артисты Молдовы'
+    label: 'Comedianți de top',
+    description: 'Cei mai buni artiști din Moldova'
   },
   {
     icon: Heart,
     value: '100%',
-    label: 'Гарантия смеха',
-    description: 'Или вернем деньги!'
+    label: 'Garanția râsului',
+    description: 'Sau îți returnăm banii!'
   }
 ]
 
 const values = [
   {
     icon: Target,
-    title: 'Наша миссия',
-    description: 'Развивать культуру стендап-комедии в Молдове и дарить людям радость через качественный юмор.'
+    title: 'Misiunea noastră',
+    description: 'Să dezvoltăm cultura stand-up comedy în Moldova și să oferim oamenilor bucurie prin umor de calitate.'
   },
   {
     icon: Star,
-    title: 'Наши ценности',
-    description: 'Честность, креативность и уважение к зрителю. Мы создаем контент, который объединяет людей.'
+    title: 'Valorile noastre',
+    description: 'Onestitate, creativitate și respect pentru spectator. Creăm conținut care unește oamenii.'
   },
   {
     icon: Users,
-    title: 'Наша команда',
-    description: 'Профессиональные комики, продюсеры и техническая команда, работающие для вашего удовольствия.'
+    title: 'Echipa noastră',
+    description: 'Comedianți profesioniști, producători și echipă tehnică care lucrează pentru plăcerea dumneavoastră.'
   }
 ]
 
@@ -65,24 +65,24 @@ export default function AboutPage() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-white">StandUp MD</h1>
-                <p className="text-sm text-gray-300">Комедия в Молдове</p>
+                <p className="text-sm text-gray-300">Comedie în Moldova</p>
               </div>
             </Link>
             
             <div className="flex items-center gap-4">
               <Link href="/">
                 <Button variant="ghost" className="text-white hover:bg-white/10">
-                  Главная
+                  Acasă
                 </Button>
               </Link>
               <Link href="/events">
                 <Button variant="ghost" className="text-white hover:bg-white/10">
-                  Мероприятия
+                  Evenimente
                 </Button>
               </Link>
               <Link href="/comedians">
                 <Button variant="ghost" className="text-white hover:bg-white/10">
-                  Комики
+                  Comedianți
                 </Button>
               </Link>
             </div>
@@ -100,11 +100,11 @@ export default function AboutPage() {
           transition={{ duration: 0.6 }}
         >
           <h1 className="text-4xl lg:text-6xl font-bold text-white mb-6">
-            О нас
+            Despre noi
           </h1>
           <p className="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
-            Мы — первая профессиональная стендап-платформа в Молдове, объединяющая 
-            талантливых комиков и любителей качественного юмора.
+            Suntem prima platformă profesională de stand-up din Moldova, care unește 
+            comedianți talentați și iubitorii de umor de calitate.
           </p>
         </motion.div>
 
@@ -118,20 +118,20 @@ export default function AboutPage() {
           <Card className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-sm border-gray-700/30">
             <CardHeader>
               <CardTitle className="text-3xl text-white text-center mb-4">
-                Наша история
+                Povestea noastră
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="grid md:grid-cols-2 gap-8 items-center">
                 <div className="space-y-4">
                   <p className="text-gray-300 leading-relaxed">
-                    StandUp MD родился из желания привнести культуру стендап-комедии в Молдову. 
-                    Мы начали с небольших выступлений в кафе и барах, а теперь организуем 
-                    полноценные шоу с профессиональным звуком, светом и онлайн-трансляциями.
+                    StandUp MD s-a născut din dorința de a aduce cultura stand-up comedy în Moldova. 
+                    Am început cu spectacole mici în cafenele și baruri, iar acum organizăm 
+                    show-uri complete cu sunet profesional, lumini și transmisiuni online.
                   </p>
                   <p className="text-gray-300 leading-relaxed">
-                    Наша цель — создать пространство, где молдавские комики могут развиваться, 
-                    а зрители — получать качественные эмоции и заряд позитива.
+                    Scopul nostru este să creăm un spațiu unde comedianții moldoveni să se poată dezvolta, 
+                    iar spectatorii să primească emoții de calitate și o încărcare de pozitivitate.
                   </p>
                 </div>
                 <div className="relative">
@@ -139,7 +139,7 @@ export default function AboutPage() {
                     <div className="text-center">
                       <Mic className="w-16 h-16 text-yellow-400 mx-auto mb-4" />
                       <p className="text-white font-bold text-lg">2021</p>
-                      <p className="text-gray-300 text-sm">Год основания</p>
+                      <p className="text-gray-300 text-sm">Anul înființării</p>
                     </div>
                   </div>
                 </div>
@@ -156,7 +156,7 @@ export default function AboutPage() {
           transition={{ duration: 0.6, delay: 0.3 }}
         >
           <h2 className="text-3xl font-bold text-white text-center mb-8">
-            Наши достижения
+            Realizările noastre
           </h2>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
             {stats.map((stat, index) => (
@@ -187,7 +187,7 @@ export default function AboutPage() {
           transition={{ duration: 0.6, delay: 0.4 }}
         >
           <h2 className="text-3xl font-bold text-white text-center mb-8">
-            Что нами движет
+            Ce ne motivează
           </h2>
           <div className="grid md:grid-cols-3 gap-8">
             {values.map((value, index) => (
@@ -223,17 +223,17 @@ export default function AboutPage() {
           <Card className="bg-gradient-to-br from-gray-800/30 to-gray-900/30 backdrop-blur-sm border-gray-700/30 p-8 max-w-2xl mx-auto">
             <CardHeader>
               <CardTitle className="text-2xl text-white mb-4">
-                Присоединяйтесь к нам!
+                Alăturați-vă nouă!
               </CardTitle>
               <CardDescription className="text-gray-300 text-lg">
-                Станьте частью растущего комьюнити любителей качественной комедии в Молдове
+                Deveniți parte din comunitatea în creștere a iubitorilor de comedie de calitate din Moldova
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link href="/buy?streamId=550e8400-e29b-41d4-a716-446655440000">
                   <Button className="bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-black font-bold px-8 py-3 rounded-xl">
-                    Купить билет на шоу
+                    Cumpără bilet la show
                   </Button>
                 </Link>
                 <Link href="/events">
@@ -241,13 +241,13 @@ export default function AboutPage() {
                     variant="outline" 
                     className="border-2 border-yellow-500/30 text-yellow-400 hover:bg-yellow-500/10 px-8 py-3 rounded-xl"
                   >
-                    Смотреть расписание
+                    Vezi programul
                   </Button>
                 </Link>
               </div>
               
               <div className="mt-8 pt-6 border-t border-gray-700/30">
-                <p className="text-gray-400 text-sm mb-4">Свяжитесь с нами:</p>
+                <p className="text-gray-400 text-sm mb-4">Contactați-ne:</p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center text-sm">
                   <a href="mailto:info@standupmd.com" className="text-yellow-400 hover:text-yellow-300 transition-colors">
                     info@standupmd.com

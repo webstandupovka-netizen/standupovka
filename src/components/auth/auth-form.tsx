@@ -125,7 +125,7 @@ export function AuthForm({ redirectTo = '/', onSuccess }: AuthFormProps) {
       setCountdown(60) // 60 секунд до возможности повторной отправки
       setMessage({
         type: 'success',
-        text: `🎉 Красивое письмо с ссылкой отправлено на ${email}`,
+        text: `📧 Письмо с ссылкой для входа отправлено на ${email}`,
       })
       
       onSuccess?.()
@@ -175,7 +175,7 @@ export function AuthForm({ redirectTo = '/', onSuccess }: AuthFormProps) {
       setCountdown(60)
       setMessage({
         type: 'success',
-        text: '🚀 Новое красивое письмо отправлено на вашу почту',
+        text: '📧 Новое письмо отправлено на вашу почту',
       })
     } catch (error: any) {
       setMessage({

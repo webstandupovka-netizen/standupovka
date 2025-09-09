@@ -13,29 +13,29 @@ import Image from 'next/image'
 import { createClient } from '@/lib/supabase-client'
 import { useRouter } from 'next/navigation'
 
-// Данные мероприятия
+// Datele evenimentului
 const upcomingEvent = {
   id: '550e8400-e29b-41d4-a716-446655440000',
-  title: 'Стендап Вечер',
-  subtitle: 'Лучшие комики Молдовы',
-  description: 'Присоединяйтесь к незабываемому вечеру смеха! Лучшие стендап-комики Молдовы выступят с новыми номерами.',
+  title: 'Seară de Stand-up',
+  subtitle: 'Cei mai buni comedianți din Moldova',
+  description: 'Alăturați-vă unei seri de neuitat plină de râs! Cei mai buni comedianți de stand-up din Moldova vor prezenta numere noi.',
   date: '2025-09-21',
   time: '20:00',
-  duration: '2 часа',
-  venue: 'Онлайн трансляция',
+  duration: '2 ore',
+  venue: 'Transmisiune online',
   price: 300,
   currency: 'MDL',
   poster: '/event_poster.jpg',
   features: [
-    'HD качество видео',
-    'Интерактивный чат',
-    'Запись доступна 7 дней',
-    'Поддержка всех устройств'
+    'Calitate video HD',
+    'Chat interactiv',
+    'Înregistrarea disponibilă 7 zile',
+    'Suport pentru toate dispozitivele'
   ],
   performers: [
-    'Александр Иванов',
-    'Мария Петрова', 
-    'Дмитрий Сидоров'
+    'Alexandru Ivanov',
+    'Maria Petrova', 
+    'Dmitri Sidorov'
   ]
 }
 
@@ -111,9 +111,9 @@ export default function PurchasePage() {
           {/* Breadcrumb */}
           <nav className="mb-8">
             <div className="flex items-center space-x-2 text-sm text-gray-400">
-              <Link href="/" className="hover:text-white transition-colors">Главная</Link>
+              <Link href="/" className="hover:text-white transition-colors">Acasă</Link>
               <ArrowRight className="w-4 h-4" />
-              <span className="text-white">Покупка билета</span>
+              <span className="text-white">Cumpărare bilet</span>
             </div>
           </nav>
 
@@ -161,7 +161,7 @@ export default function PurchasePage() {
                     
                     {/* Event Features */}
                     <div className="space-y-4">
-                      <h3 className="text-lg font-semibold text-white">Что включено:</h3>
+                      <h3 className="text-lg font-semibold text-white">Ce este inclus:</h3>
                       <div className="grid grid-cols-1 gap-3">
                         {upcomingEvent.features.map((feature, index) => (
                           <div key={index} className="flex items-center space-x-3">
@@ -174,7 +174,7 @@ export default function PurchasePage() {
 
                     {/* Performers */}
                     <div className="mt-6">
-                      <h3 className="text-lg font-semibold text-white mb-3">Участники:</h3>
+                      <h3 className="text-lg font-semibold text-white mb-3">Participanți:</h3>
                       <div className="flex flex-wrap gap-2">
                         {upcomingEvent.performers.map((performer, index) => (
                           <Badge key={index} variant="secondary" className="bg-purple-600/20 text-purple-200 border-purple-500/30">
@@ -197,7 +197,7 @@ export default function PurchasePage() {
                   <CardHeader>
                     <CardTitle className="text-white flex items-center space-x-2">
                       <Shield className="w-5 h-5 text-green-400" />
-                      <span>Безопасность и удобство</span>
+                      <span>Securitate și confort</span>
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
@@ -205,22 +205,22 @@ export default function PurchasePage() {
                       <div className="flex items-center space-x-3">
                         <Zap className="w-5 h-5 text-yellow-400" />
                         <div>
-                          <p className="text-white font-medium">Быстрая авторизация</p>
-                          <p className="text-gray-400 text-sm">Войдите через Google или Apple за секунды</p>
+                          <p className="text-white font-medium">Autorizare rapidă</p>
+                          <p className="text-gray-400 text-sm">Conectați-vă prin Google sau Apple în câteva secunde</p>
                         </div>
                       </div>
                       <div className="flex items-center space-x-3">
                         <Shield className="w-5 h-5 text-green-400" />
                         <div>
-                          <p className="text-white font-medium">Защищенные платежи</p>
-                          <p className="text-gray-400 text-sm">Все транзакции защищены банковским шифрованием</p>
+                          <p className="text-white font-medium">Plăți securizate</p>
+                          <p className="text-gray-400 text-sm">Toate tranzacțiile sunt protejate prin criptare bancară</p>
                         </div>
                       </div>
                       <div className="flex items-center space-x-3">
                         <Globe className="w-5 h-5 text-blue-400" />
                         <div>
-                          <p className="text-white font-medium">Мгновенный доступ</p>
-                          <p className="text-gray-400 text-sm">Получите ссылку на трансляцию сразу после оплаты</p>
+                          <p className="text-white font-medium">Acces instantaneu</p>
+                          <p className="text-gray-400 text-sm">Primiți linkul pentru transmisiune imediat după plată</p>
                         </div>
                       </div>
                     </div>
@@ -238,20 +238,20 @@ export default function PurchasePage() {
               >
                 <Card className="bg-black/40 border-white/10 backdrop-blur-sm">
                   <CardHeader>
-                    <CardTitle className="text-2xl text-white">Покупка билета</CardTitle>
+                    <CardTitle className="text-2xl text-white">Cumpărare bilet</CardTitle>
                     <CardDescription className="text-gray-300">
-                      Всего один шаг до просмотра трансляции
+                      Doar un pas până la vizionarea transmisiunii
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
                     {/* Price Display */}
                     <div className="bg-gradient-to-r from-purple-600/20 to-yellow-400/20 rounded-lg p-6 mb-6 border border-purple-500/30">
                       <div className="text-center">
-                        <p className="text-gray-300 text-sm mb-2">Стоимость билета</p>
+                        <p className="text-gray-300 text-sm mb-2">Prețul biletului</p>
                         <p className="text-4xl font-bold text-white mb-2">
                           {upcomingEvent.price} <span className="text-2xl text-gray-300">{upcomingEvent.currency}</span>
                         </p>
-                        <p className="text-yellow-400 text-sm">Включает доступ к записи на 7 дней</p>
+                        <p className="text-yellow-400 text-sm">Include acces la înregistrare pentru 7 zile</p>
                       </div>
                     </div>
 
@@ -263,7 +263,7 @@ export default function PurchasePage() {
                         <div className="bg-green-600/20 border border-green-500/30 rounded-lg p-4">
                           <div className="flex items-center space-x-2">
                             <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                            <p className="text-green-200 text-sm">Вы авторизованы как {user.email}</p>
+                            <p className="text-green-200 text-sm">Sunteți autorizat ca {user.email}</p>
                           </div>
                         </div>
                         <PaymentForm 
@@ -277,17 +277,17 @@ export default function PurchasePage() {
                       <div className="space-y-4">
                         <div className="bg-yellow-600/20 border border-yellow-500/30 rounded-lg p-4">
                           <p className="text-yellow-200 text-sm mb-3">
-                            Для покупки билета необходимо войти в систему
+                            Pentru a cumpăra biletul este necesar să vă conectați în sistem
                           </p>
                         </div>
                         <Link href="/auth/login">
                           <Button className="w-full bg-gradient-to-r from-purple-600 to-yellow-500 hover:from-purple-700 hover:to-yellow-600 text-white font-semibold py-3 text-lg">
-                            Войти и купить билет
+                            Conectează-te și cumpără bilet
                             <ArrowRight className="w-5 h-5 ml-2" />
                           </Button>
                         </Link>
                         <p className="text-center text-gray-400 text-sm">
-                          Быстрый вход через Google или Apple
+                          Conectare rapidă prin Google sau Apple
                         </p>
                       </div>
                     )}
@@ -303,14 +303,14 @@ export default function PurchasePage() {
               >
                 <Card className="bg-black/40 border-white/10 backdrop-blur-sm">
                   <CardHeader>
-                    <CardTitle className="text-white text-lg">Важная информация</CardTitle>
+                    <CardTitle className="text-white text-lg">Informații importante</CardTitle>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-3 text-sm text-gray-300">
-                      <p>• Ссылка на трансляцию будет отправлена на ваш email сразу после оплаты</p>
-                      <p>• Трансляция начнется в {upcomingEvent.time} по времени Молдовы</p>
-                      <p>• Запись будет доступна в течение 7 дней после мероприятия</p>
-                      <p>• При технических проблемах обращайтесь в поддержку</p>
+                      <p>• Linkul pentru transmisiune va fi trimis pe email-ul dumneavoastră imediat după plată</p>
+                      <p>• Transmisiunea va începe la {upcomingEvent.time} ora Moldovei</p>
+                      <p>• Înregistrarea va fi disponibilă timp de 7 zile după eveniment</p>
+                      <p>• În caz de probleme tehnice, contactați suportul</p>
                     </div>
                   </CardContent>
                 </Card>
