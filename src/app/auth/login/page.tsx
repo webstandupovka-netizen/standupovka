@@ -1,6 +1,7 @@
 import { Suspense } from 'react'
 import { AuthForm } from '@/components/auth/auth-form'
 import { Loader2 } from 'lucide-react'
+import Script from 'next/script'
 
 interface LoginPageProps {
   searchParams: Promise<{
@@ -16,6 +17,9 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
   return (
     <div className="flex items-center justify-center min-h-[calc(100vh-120px)] p-4">
+      {/* Скрипт для исправления проблемы с хэш-фрагментом в URL */}
+      <Script src="/auth/login/fix-hash-fragment.js" strategy="beforeInteractive" />
+      
       <div className="w-full max-w-md">
         {error && (
           <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
