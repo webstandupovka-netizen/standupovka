@@ -127,7 +127,7 @@ export function EventBlock({ user, hasAccess }: EventBlockProps) {
                   <img src="/ticket-icon.svg" alt="Ticket" className="w-5 h-5 md:w-6 md:h-6" />
                   <span className="text-white font-bold text-sm md:text-base uppercase">live bilet</span>
                   <div className="bg-white text-red-600 px-2 py-1 md:px-3 md:py-2 rounded-xl">
-                    <span className="font-bold text-xs md:text-sm uppercase">150 mdl</span>
+                    <span className="font-bold text-xs md:text-sm uppercase">300 mdl</span>
                   </div>
                 </div>
               </Link>
@@ -146,7 +146,7 @@ export function EventBlock({ user, hasAccess }: EventBlockProps) {
          <div className="flex-1 flex justify-center lg:justify-end">
            <div className="w-full max-w-[400px] md:max-w-[500px] lg:max-w-[600px] aspect-square">
              <img 
-               src="/event-poster.png" 
+               src="/event_poster.jpg" 
                alt="Event Poster" 
                className="w-full h-full object-cover rounded-2xl md:rounded-3xl"
              />

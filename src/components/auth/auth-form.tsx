@@ -98,27 +98,34 @@ export function AuthForm({ redirectTo = '/', onSuccess }: AuthFormProps) {
       // Получаем отпечаток браузера для дополнительной безопасности
       const deviceFingerprint = fingerprint || 'unknown'
       
-      const { error } = await supabase.auth.signInWithOtp({
-        email: email.trim(),
-        options: {
-          emailRedirectTo: `${getBaseUrl()}/auth/callback?redirect=${encodeURIComponent(redirectTo)}`,
+      // Используем наш кастомный API для отправки красивого письма
+      const response = await fetch('/api/auth/magic-link', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email.trim(),
+          redirectTo: `${getBaseUrl()}/auth/callback?redirect=${encodeURIComponent(redirectTo)}`,
           data: {
             fingerprint: deviceFingerprint,
             userAgent: navigator.userAgent,
             timestamp: new Date().toISOString(),
           },
-        },
+        }),
       })
 
-      if (error) {
-        throw error
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Ошибка отправки письма')
       }
 
       setIsEmailSent(true)
       setCountdown(60) // 60 секунд до возможности повторной отправки
       setMessage({
         type: 'success',
-        text: `Linkul de conectare a fost trimis la ${email}`,
+        text: `🎉 Красивое письмо с ссылкой отправлено на ${email}`,
       })
       
       onSuccess?.()
@@ -142,27 +149,33 @@ export function AuthForm({ redirectTo = '/', onSuccess }: AuthFormProps) {
     try {
       const deviceFingerprint = fingerprint || 'unknown'
       
-      const baseUrl = getBaseUrl();
-      const { error } = await supabase.auth.signInWithOtp({
-        email: email.trim(),
-        options: {
-          emailRedirectTo: `${baseUrl}/auth/callback?redirect=${encodeURIComponent(redirectTo)}`,
+      // Используем наш кастомный API для повторной отправки
+      const response = await fetch('/api/auth/magic-link', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email.trim(),
+          redirectTo: `${getBaseUrl()}/auth/callback?redirect=${encodeURIComponent(redirectTo)}`,
           data: {
             fingerprint: deviceFingerprint,
             userAgent: navigator.userAgent,
             timestamp: new Date().toISOString(),
           },
-        },
+        }),
       })
 
-      if (error) {
-        throw error
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Ошибка отправки письма')
       }
 
       setCountdown(60)
       setMessage({
         type: 'success',
-        text: '🚀 Новая ссылка отправлена на вашу почту',
+        text: '🚀 Новое красивое письмо отправлено на вашу почту',
       })
     } catch (error: any) {
       setMessage({

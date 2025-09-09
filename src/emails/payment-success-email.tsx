@@ -29,11 +29,11 @@ const baseUrl = process.env.VERCEL_URL
   : (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000')
 
 export const PaymentSuccessEmail = ({
-  userFirstname = 'Пользователь',
-  streamTitle = 'Стендап Вечер',
-  streamDate = '21 сентября 2025',
+  userFirstname = 'Utilizator',
+  streamTitle = 'Seara de Stand-up',
+  streamDate = '21 septembrie 2025',
   streamTime = '20:00',
-  amount = 150,
+  amount = 300,
   currency = 'MDL',
   streamUrl = `${baseUrl}/stream`,
   supportEmail = 'support@standupovka.md',
@@ -41,7 +41,7 @@ export const PaymentSuccessEmail = ({
   return (
     <Html>
       <Head />
-      <Preview>Оплата прошла успешно! Ваш доступ к трансляции активирован.</Preview>
+      <Preview>Plata a fost procesată cu succes! Accesul dvs. la transmisiune a fost activat.</Preview>
       <Body style={main}>
         <Container style={container}>
           <Section style={logoContainer}>
@@ -54,30 +54,30 @@ export const PaymentSuccessEmail = ({
             />
           </Section>
           
-          <Heading style={h1}>🎉 Оплата прошла успешно!</Heading>
+          <Heading style={h1}>🎉 Plata a fost procesată cu succes!</Heading>
           
           <Text style={heroText}>
-            Привет, {userFirstname}! Ваша оплата успешно обработана, и доступ к трансляции активирован.
+            Salut, {userFirstname}! Plata dvs. a fost procesată cu succes și accesul la transmisiune a fost activat.
           </Text>
           
           <Section style={eventBox}>
             <Heading style={eventTitle}>{streamTitle}</Heading>
             <Text style={eventDetails}>
-              📅 Дата: {streamDate}<br/>
-              🕐 Время: {streamTime}<br/>
-              💰 Оплачено: {amount} {currency}
+              📅 Data: {streamDate}<br/>
+              🕐 Ora: {streamTime}<br/>
+              💰 Plătit: {amount} {currency}
             </Text>
           </Section>
           
           <Section style={buttonContainer}>
             <Button href={streamUrl} style={button}>
-              Смотреть трансляцию
+              Urmărește transmisiunea
             </Button>
           </Section>
           
           <Text style={paragraph}>
-            Ваш доступ к трансляции активирован и будет доступен на одном устройстве одновременно.
-            Ссылка для просмотра:
+            Accesul dvs. la transmisiune a fost activat și va fi disponibil pe un singur dispozitiv simultan.
+            Link pentru vizionare:
           </Text>
           
           <Section style={linkBox}>
@@ -87,33 +87,33 @@ export const PaymentSuccessEmail = ({
           </Section>
           
           <Section style={instructionsBox}>
-            <Heading style={instructionsTitle}>📋 Инструкции по просмотру:</Heading>
+            <Heading style={instructionsTitle}>📋 Instrucțiuni de vizionare:</Heading>
             <ul style={instructionsList}>
-              <li style={instructionItem}>Войдите в свой аккаунт на сайте</li>
-              <li style={instructionItem}>Перейдите по ссылке выше или нажмите кнопку "Смотреть трансляцию"</li>
-              <li style={instructionItem}>Трансляция будет доступна только на одном устройстве</li>
-              <li style={instructionItem}>Запись будет доступна в течение 7 дней после мероприятия</li>
+              <li style={instructionItem}>Conectați-vă în contul dvs. pe site</li>
+              <li style={instructionItem}>Accesați linkul de mai sus sau apăsați butonul "Urmărește transmisiunea"</li>
+              <li style={instructionItem}>Transmisiunea va fi disponibilă doar pe un singur dispozitiv</li>
+              <li style={instructionItem}>Înregistrarea va fi disponibilă timp de 7 zile după eveniment</li>
             </ul>
           </Section>
           
           <Section style={warningBox}>
             <Text style={warningText}>
-              ⚠️ <strong>Важно:</strong> Доступ привязан к вашему устройству. При попытке просмотра с другого устройства, 
-              текущая сессия будет завершена.
+              ⚠️ <strong>Important:</strong> Accesul este legat de dispozitivul dvs. La încercarea de vizionare de pe alt dispozitiv, 
+              sesiunea curentă va fi încheiată.
             </Text>
           </Section>
           
           <Text style={paragraph}>
-            Если у вас возникли вопросы или проблемы с доступом, 
-            свяжитесь с нашей службой поддержки: <Link href={`mailto:${supportEmail}`} style={link}>{supportEmail}</Link>
+            Dacă aveți întrebări sau probleme cu accesul, 
+            contactați serviciul nostru de suport: <Link href={`mailto:${supportEmail}`} style={link}>{supportEmail}</Link>
           </Text>
           
           <Section style={footer}>
             <Text style={footerText}>
-              Это письмо было отправлено автоматически. Пожалуйста, не отвечайте на него.
+              Acest email a fost trimis automat. Vă rugăm să nu răspundeți la el.
             </Text>
             <Text style={footerText}>
-              © 2024 StandUp MD. Все права защищены.
+              © 2024 StandUp MD. Toate drepturile rezervate.
             </Text>
           </Section>
         </Container>

@@ -1,6 +1,8 @@
 import { render } from '@react-email/render'
 import { PaymentSuccessEmail } from '@/emails/payment-success-email'
+import { MagicLinkEmail } from '@/emails/magic-link-email'
 import { supabaseServer } from '@/lib/database/client'
+import nodemailer from 'nodemailer'
 
 interface EmailServiceConfig {
   provider: 'resend' | 'nodemailer' | 'console'
@@ -75,9 +77,12 @@ class EmailService {
 
   private async sendWithResend({ to, subject, html }: { to: string; subject: string; html: string }): Promise<boolean> {
     if (!this.config.apiKey) {
+      console.error('Resend API key not configured')
       throw new Error('Resend API key not configured')
     }
 
+    console.log('Sending email via Resend API to:', to)
+    
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -92,14 +97,43 @@ class EmailService {
       })
     })
 
-    return response.ok
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error('Resend API error:', response.status, errorText)
+      return false
+    }
+
+    const result = await response.json()
+    console.log('Email sent successfully via Resend:', result.id)
+    return true
   }
 
   private async sendWithNodemailer({ to, subject, html }: { to: string; subject: string; html: string }): Promise<boolean> {
-    // Здесь можно добавить интеграцию с Nodemailer
-    // Для примера возвращаем true
-    console.log('Nodemailer not implemented yet')
-    return false
+    try {
+      const transporter = nodemailer.createTransport({
+        host: process.env.SMTP_HOST || 'smtp.resend.com',
+        port: parseInt(process.env.SMTP_PORT || '587'),
+        secure: false, // true for 465, false for other ports
+        requireTLS: true,
+         auth: {
+          user: process.env.SMTP_USER || 'resend',
+          pass: process.env.SMTP_PASS || process.env.RESEND_API_KEY
+        }
+      })
+
+      const info = await transporter.sendMail({
+        from: this.config.from,
+        to,
+        subject,
+        html
+      })
+
+      console.log('Email sent via SMTP:', info.messageId)
+      return true
+    } catch (error) {
+      console.error('SMTP sending failed:', error)
+      return false
+    }
   }
 
   private async sendWithConsole({ to, subject, html }: { to: string; subject: string; html: string }): Promise<boolean> {
@@ -143,6 +177,33 @@ class EmailService {
     } catch (error) {
       console.error('Failed to log email:', error)
     }
+  }
+
+  async sendMagicLinkEmail({
+    userEmail,
+    magicLink,
+    expiresIn = '15 минут',
+    userId
+  }: {
+    userEmail: string
+    magicLink: string
+    expiresIn?: string
+    userId?: string
+  }): Promise<boolean> {
+    const html = await render(MagicLinkEmail({
+      userEmail,
+      magicLink,
+      expiresIn,
+      supportEmail: 'support@standupovka.md'
+    }))
+
+    return this.sendEmail({
+      to: userEmail,
+      subject: '🔐 Ваша ссылка для входа в Standup',
+      html,
+      userId,
+      emailType: 'magic_link'
+    })
   }
 
   async sendPaymentSuccessEmail({

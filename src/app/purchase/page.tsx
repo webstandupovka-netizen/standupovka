@@ -23,9 +23,9 @@ const upcomingEvent = {
   time: '20:00',
   duration: '2 часа',
   venue: 'Онлайн трансляция',
-  price: 150,
+  price: 300,
   currency: 'MDL',
-  poster: '/IMG_0090.png.webp',
+  poster: '/event_poster.jpg',
   features: [
     'HD качество видео',
     'Интерактивный чат',

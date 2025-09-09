@@ -27,46 +27,46 @@ const baseUrl = process.env.VERCEL_URL
 export const MagicLinkEmail = ({
   userEmail = 'user@example.com',
   magicLink = `${baseUrl}/auth/verify`,
-  expiresIn = '15 минут',
-  supportEmail = 'support@standup.com',
+  expiresIn = '15 minute',
+  supportEmail = 'standupovkaclub@gmail.com',
 }: MagicLinkEmailProps) => {
   return (
     <Html>
       <Head />
-      <Preview>Ваша ссылка для входа в Standup</Preview>
+      <Preview>Link-ul dvs. de conectare la Standup</Preview>
       <Body style={main}>
         <Container style={container}>
           <Section style={logoContainer}>
             <Img
-              src={`${baseUrl}/logo.png`}
-              width="120"
-              height="36"
-              alt="Standup"
+              src="https://standupuvka.live/event_poster.jpg"
+              width="400"
+              height="200"
+              alt="Standupovka"
               style={logo}
             />
           </Section>
           
-          <Heading style={h1}>Вход в Standup</Heading>
+          <Heading style={h1}>Conectare la Standup</Heading>
           
           <Text style={heroText}>
-            Мы получили запрос на вход в ваш аккаунт Standup с адреса {userEmail}.
+            Am primit o cerere de conectare la contul dvs. Standup de la adresa {userEmail}.
           </Text>
           
           <Section style={codeBox}>
             <Text style={confirmationCodeText}>
-              Нажмите на кнопку ниже, чтобы войти в систему. 
-              Эта ссылка действительна в течение {expiresIn}.
+              Faceți clic pe butonul de mai jos pentru a vă conecta la sistem. 
+              Acest link este valabil timp de {expiresIn}.
             </Text>
           </Section>
           
           <Section style={buttonContainer}>
             <Button style={button} href={magicLink}>
-              Войти в Standup
+              Conectare la Standup
             </Button>
           </Section>
           
           <Text style={paragraph}>
-            Если кнопка не работает, скопируйте и вставьте эту ссылку в ваш браузер:
+            Dacă butonul nu funcționează, copiați și lipiți acest link în browser:
           </Text>
           
           <Section style={linkContainer}>
@@ -77,25 +77,25 @@ export const MagicLinkEmail = ({
           
           <Section style={warningBox}>
             <Text style={warningText}>
-              ⚠️ <strong>Важно:</strong> Если вы не запрашивали этот вход, 
-              просто проигнорируйте это письмо. Ваш аккаунт останется в безопасности.
+              ⚠️ <strong>Important:</strong> Dacă nu ați solicitat această conectare, 
+              ignorați acest email. Contul dvs. va rămâne în siguranță.
             </Text>
           </Section>
           
           <Text style={paragraph}>
-            <strong>Советы по безопасности:</strong>
+            <strong>Sfaturi de securitate:</strong>
           </Text>
           
           <Section style={tipsList}>
-            <Text style={tipItem}>🔒 Никогда не делитесь этой ссылкой с другими</Text>
-            <Text style={tipItem}>⏰ Ссылка автоматически истечет через {expiresIn}</Text>
-            <Text style={tipItem}>🚫 Ссылка может быть использована только один раз</Text>
-            <Text style={tipItem}>📧 Всегда проверяйте адрес отправителя</Text>
+            <Text style={tipItem}>🔒 Nu împărtășiți niciodată acest link cu alții</Text>
+            <Text style={tipItem}>⏰ Link-ul va expira automat după {expiresIn}</Text>
+            <Text style={tipItem}>🚫 Link-ul poate fi folosit o singură dată</Text>
+            <Text style={tipItem}>📧 Verificați întotdeauna adresa expeditorului</Text>
           </Section>
           
           <Text style={paragraph}>
-            Если у вас есть вопросы или проблемы с входом, обратитесь к нашей 
-            службе поддержки по адресу{' '}
+            Dacă aveți întrebări sau probleme cu conectarea, contactați 
+            echipa noastră de suport la adresa{' '}
             <Link href={`mailto:${supportEmail}`} style={link}>
               {supportEmail}
             </Link>
@@ -103,16 +103,16 @@ export const MagicLinkEmail = ({
           </Text>
           
           <Text style={paragraph}>
-            С наилучшими пожеланиями,<br />
-            Команда Standup
+            Cu cele mai bune urări,<br />
+            Standupovka
           </Text>
           
           <Section style={footer}>
             <Text style={footerText}>
-              Это письмо было отправлено автоматически. Пожалуйста, не отвечайте на него.
+              Acest email a fost trimis automat. Vă rugăm să nu răspundeți.
             </Text>
             <Text style={footerText}>
-              © 2024 Standup. Все права защищены.
+              © 2025 Standupovka. Toate drepturile rezervate.
             </Text>
           </Section>
         </Container>

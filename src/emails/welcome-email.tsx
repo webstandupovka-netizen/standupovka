@@ -24,14 +24,14 @@ const baseUrl = process.env.VERCEL_URL
   : (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000')
 
 export const WelcomeEmail = ({
-  userFirstname = 'Пользователь',
+  userFirstname = 'Utilizator',
   loginUrl = `${baseUrl}/auth/login`,
   supportEmail = 'support@standup.com',
 }: WelcomeEmailProps) => {
   return (
     <Html>
       <Head />
-      <Preview>Добро пожаловать в Standup! Ваш аккаунт готов к использованию.</Preview>
+      <Preview>Bun venit la Standup! Contul dvs. este gata de utilizare.</Preview>
       <Body style={main}>
         <Container style={container}>
           <Section style={logoContainer}>
@@ -44,41 +44,41 @@ export const WelcomeEmail = ({
             />
           </Section>
           
-          <Heading style={h1}>Добро пожаловать в Standup!</Heading>
+          <Heading style={h1}>Bun venit la Standup!</Heading>
           
           <Text style={heroText}>
-            Привет, {userFirstname}! Мы рады приветствовать вас в нашей платформе 
-            для управления задачами и проектами.
+            Salut, {userFirstname}! Suntem bucuroși să vă întâmpinăm pe platforma noastră 
+            pentru gestionarea sarcinilor și proiectelor.
           </Text>
           
           <Section style={codeBox}>
             <Text style={confirmationCodeText}>
-              Ваш аккаунт успешно создан и готов к использованию. 
-              Теперь вы можете войти в систему и начать работу с задачами.
+              Contul dvs. a fost creat cu succes și este gata de utilizare. 
+              Acum vă puteți conecta în sistem și începe să lucrați cu sarcinile.
             </Text>
           </Section>
           
           <Section style={buttonContainer}>
             <Button style={button} href={loginUrl}>
-              Войти в аккаунт
+              Conectează-te în cont
             </Button>
           </Section>
           
           <Text style={paragraph}>
-            <strong>Что вы можете делать в Standup:</strong>
+            <strong>Ce puteți face în Standup:</strong>
           </Text>
           
           <Section style={featuresList}>
-            <Text style={featureItem}>✅ Создавать и управлять задачами</Text>
-            <Text style={featureItem}>📊 Отслеживать прогресс проектов</Text>
-            <Text style={featureItem}>👥 Сотрудничать с командой</Text>
-            <Text style={featureItem}>📈 Анализировать продуктивность</Text>
-            <Text style={featureItem}>🎯 Устанавливать приоритеты</Text>
+            <Text style={featureItem}>✅ Creați și gestionați sarcini</Text>
+            <Text style={featureItem}>📊 Urmăriți progresul proiectelor</Text>
+            <Text style={featureItem}>👥 Colaborați cu echipa</Text>
+            <Text style={featureItem}>📈 Analizați productivitatea</Text>
+            <Text style={featureItem}>🎯 Stabiliți priorități</Text>
           </Section>
           
           <Text style={paragraph}>
-            Если у вас есть вопросы или нужна помощь, не стесняйтесь обращаться 
-            к нашей службе поддержки по адресу{' '}
+            Dacă aveți întrebări sau aveți nevoie de ajutor, nu ezitați să contactați 
+            serviciul nostru de suport la adresa{' '}
             <Link href={`mailto:${supportEmail}`} style={link}>
               {supportEmail}
             </Link>
@@ -86,16 +86,16 @@ export const WelcomeEmail = ({
           </Text>
           
           <Text style={paragraph}>
-            С наилучшими пожеланиями,<br />
-            Команда Standup
+            Cu cele mai bune urări,<br />
+            Echipa Standup
           </Text>
           
           <Section style={footer}>
             <Text style={footerText}>
-              Это письмо было отправлено автоматически. Пожалуйста, не отвечайте на него.
+              Acest email a fost trimis automat. Vă rugăm să nu răspundeți la el.
             </Text>
             <Text style={footerText}>
-              © 2024 Standup. Все права защищены.
+              © 2024 Standup. Toate drepturile rezervate.
             </Text>
           </Section>
         </Container>

@@ -322,7 +322,7 @@ function BuyPageInner() {
               <div className="bg-gray-800/50 border border-gray-600 rounded-xl p-3 md:p-4 space-y-3">
                 <div className="flex justify-between">
                   <span className="text-gray-200 text-xs md:text-sm">Cost:</span>
-                  <span className="text-gray-200 font-bold text-xs md:text-sm">150 MDL</span>
+                  <span className="text-gray-200 font-bold text-xs md:text-sm">300 MDL</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-200 text-xs md:text-sm">Acces:</span>
@@ -390,7 +390,7 @@ function BuyPageInner() {
                         <span className="text-white font-bold text-sm md:text-base uppercase">plătește</span>
                       </div>
                       <div className="bg-white rounded-xl px-3 py-1.5">
-                        <span className="text-red-600 font-black text-base md:text-lg uppercase">150 mdl</span>
+                        <span className="text-red-600 font-black text-base md:text-lg uppercase">300 mdl</span>
                       </div>
                     </div>
                   </button>
