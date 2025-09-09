@@ -30,13 +30,29 @@ export const createProxyFetch = (proxyConfig?: ProxyConfig) => {
         ? new HttpsProxyAgent(proxyConfig.url)
         : new HttpProxyAgent(proxyConfig.url)
       
-      return async (url: string | URL | Request, init?: RequestInit): Promise<Response> => {
+      return async (url: string | URL | Request, init?: RequestInit) => {
         const options = {
           ...init,
           agent: agent
         }
         
-        return nodeFetch(url, options)
+        const response = await nodeFetch(url, options)
+        
+        // Создаем Response-совместимый объект
+        return {
+          ok: response.ok,
+          status: response.status,
+          statusText: response.statusText,
+          headers: response.headers,
+          json: () => response.json(),
+          text: () => response.text(),
+          blob: () => response.blob(),
+          arrayBuffer: () => response.arrayBuffer(),
+          url: response.url,
+          redirected: response.redirected,
+          type: response.type,
+          clone: () => response.clone()
+        } as Response
       }
     } catch (error) {
       console.warn('node-fetch or proxy agents not available, falling back to native fetch')
