@@ -38,6 +38,7 @@
     "dotenv": "^17.2.1",
     "framer-motion": "^12.23.12",
     "hls.js": "^1.6.7",
+    "https-proxy-agent": "^7.0.6",
     "ioredis": "^5.7.0",
     "jose": "^6.0.12",
     "jsonwebtoken": "^9.0.2",

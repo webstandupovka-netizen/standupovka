@@ -1,5 +1,6 @@
 // lib/payments/maib.ts
 import crypto from 'crypto'
+import { maibFetch } from '../http-agent'
 
 export interface MAIBPaymentRequest {
   amount: number
@@ -128,7 +129,7 @@ export class MAIBPaymentService {
   private async generateAccessToken(): Promise<string> {
     console.log('🔑 Generating MAIB access token...')
     
-    const response = await fetch(`${this.apiUrl}/generate-token`, {
+    const response = await maibFetch(`${this.apiUrl}/generate-token`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -214,7 +215,7 @@ export class MAIBPaymentService {
     })
 
     const headers = await this.getAuthHeaders()
-    const response = await fetch(`${this.apiUrl}/pay`, {
+    const response = await maibFetch(`${this.apiUrl}/pay`, {
       method: 'POST',
       headers,
       body: JSON.stringify(paymentData)
@@ -244,7 +245,7 @@ export class MAIBPaymentService {
     currency?: string
   }> {
     const headers = await this.getAuthHeaders()
-    const response = await fetch(`${this.apiUrl}/pay-info/${payId}`, {
+    const response = await maibFetch(`${this.apiUrl}/pay-info/${payId}`, {
       method: 'GET',
       headers
     })
@@ -289,7 +290,7 @@ export class MAIBPaymentService {
     }
 
     const headers = await this.getAuthHeaders()
-    const response = await fetch(`${this.apiUrl}/refund`, {
+    const response = await maibFetch(`${this.apiUrl}/refund`, {
       method: 'POST',
       headers,
       body: JSON.stringify(refundData)

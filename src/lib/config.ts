@@ -35,5 +35,9 @@ export const config = {
     projectSecret: process.env.MAIB_PROJECT_SECRET || '',
     signatureKey: process.env.MAIB_SIGNATURE_KEY || '',
   },
+  proxy: {
+    url: process.env.FIXIE_URL || '',
+    enabled: process.env.NODE_ENV === 'production' && !!process.env.FIXIE_URL,
+  },
   adminEmail: process.env.ADMIN_EMAIL || 'admin@standupovka.md',
 };
