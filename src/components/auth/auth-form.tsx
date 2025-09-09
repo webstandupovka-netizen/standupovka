@@ -82,12 +82,12 @@ export function AuthForm({ redirectTo = '/', onSuccess }: AuthFormProps) {
     e.preventDefault()
     
     if (!email.trim()) {
-      setMessage({ type: 'error', text: 'Пожалуйста, введите email адрес' })
+      setMessage({ type: 'error', text: 'Vă rugăm să introduceți adresa de email' })
       return
     }
 
     if (!isValidEmail) {
-      setMessage({ type: 'error', text: 'Пожалуйста, введите корректный email адрес' })
+      setMessage({ type: 'error', text: 'Vă rugăm să introduceți o adresă de email validă' })
       return
     }
 
@@ -118,14 +118,14 @@ export function AuthForm({ redirectTo = '/', onSuccess }: AuthFormProps) {
       const result = await response.json()
 
       if (!response.ok) {
-        throw new Error(result.error || 'Ошибка отправки письма')
+        throw new Error(result.error || 'Eroare la trimiterea emailului')
       }
 
       setIsEmailSent(true)
-      setCountdown(60) // 60 секунд до возможности повторной отправки
+      setCountdown(60) // 60 de secunde până la posibilitatea de retrimitere
       setMessage({
         type: 'success',
-        text: `📧 Письмо с ссылкой для входа отправлено на ${email}`,
+        text: `📧 Emailul cu linkul de conectare a fost trimis la ${email}`,
       })
       
       onSuccess?.()
@@ -133,7 +133,7 @@ export function AuthForm({ redirectTo = '/', onSuccess }: AuthFormProps) {
       console.error('Auth error:', error)
       setMessage({
         type: 'error',
-        text: error.message || 'Произошла ошибка при отправке ссылки. Попробуйте еще раз.',
+        text: error.message || 'A apărut o eroare la trimiterea linkului. Încercați din nou.',
       })
     } finally {
       setIsLoading(false)
@@ -169,18 +169,18 @@ export function AuthForm({ redirectTo = '/', onSuccess }: AuthFormProps) {
       const result = await response.json()
 
       if (!response.ok) {
-        throw new Error(result.error || 'Ошибка отправки письма')
+        throw new Error(result.error || 'Eroare la trimiterea emailului')
       }
 
       setCountdown(60)
       setMessage({
         type: 'success',
-        text: '📧 Новое письмо отправлено на вашу почту',
+        text: '📧 Un nou email a fost trimis la adresa dvs.',
       })
     } catch (error: any) {
       setMessage({
         type: 'error',
-        text: error.message || 'Ошибка при повторной отправке.',
+        text: error.message || 'Eroare la retrimitere.',
       })
     } finally {
       setIsLoading(false)

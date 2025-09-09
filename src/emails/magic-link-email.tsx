@@ -27,7 +27,7 @@ const baseUrl = process.env.VERCEL_URL
 export const MagicLinkEmail = ({
   userEmail = 'user@example.com',
   magicLink = `${baseUrl}/auth/verify`,
-  expiresIn = '15 minute',
+  expiresIn = '1 oră',
   supportEmail = 'standupovkaclub@gmail.com',
 }: MagicLinkEmailProps) => {
   return (

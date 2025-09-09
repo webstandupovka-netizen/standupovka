@@ -31,6 +31,12 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                 <strong>Acces interzis:</strong> Autentificarea a fost anulată sau a apărut o eroare.
               </>
             )}
+            {error === 'otp_expired' && (
+              <>
+                <strong>Link expirat:</strong> Linkul de autentificare a expirat. 
+                Vă rugăm să solicitați un nou link de conectare.
+              </>
+            )}
           </div>
         )}
         

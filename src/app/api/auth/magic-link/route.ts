@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
     const emailSent = await emailService.sendMagicLinkEmail({
       userEmail: email,
       magicLink: authData.properties.action_link,
-      expiresIn: '15 минут'
+      expiresIn: '1 oră'
     })
 
     if (!emailSent) {

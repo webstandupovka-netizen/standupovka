@@ -182,7 +182,7 @@ class EmailService {
   async sendMagicLinkEmail({
     userEmail,
     magicLink,
-    expiresIn = '15 минут',
+    expiresIn = '1 oră',
     userId
   }: {
     userEmail: string
