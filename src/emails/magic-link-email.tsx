@@ -38,9 +38,9 @@ export const MagicLinkEmail = ({
         <Container style={container}>
           <Section style={logoContainer}>
             <Img
-              src="https://standupuvka.live/event_poster.jpg"
+              src="https://standupovka.live/event_poster.jpg"
               width="400"
-              height="200"
+              height="400"
               alt="Standupovka"
               style={logo}
             />
