@@ -46,9 +46,9 @@ function redirectWithHashParams() {
       const urlParams = new URLSearchParams(window.location.search);
       const hasError = urlParams.has('error');
       
-      if (hasError) {
-        // Если есть ошибка, перенаправляем на callback URL с параметрами из хэша
-        let callbackUrl = `/auth/callback?access_token=${encodeURIComponent(hashParams.access_token)}`;
+      // Всегда перенаправляем на callback URL с параметрами из хэша
+      // Это позволит избежать промежуточного состояния с ошибкой
+      let callbackUrl = `/auth/callback?access_token=${encodeURIComponent(hashParams.access_token)}`;
         
         // Добавляем остальные параметры
         if (hashParams.expires_at) callbackUrl += `&expires_at=${encodeURIComponent(hashParams.expires_at)}`;
@@ -62,12 +62,8 @@ function redirectWithHashParams() {
           callbackUrl += `&redirect=${encodeURIComponent(urlParams.get('redirect'))}`;
         }
         
-        // Перенаправляем на callback URL
+        // Всегда перенаправляем на callback URL
         window.location.href = callbackUrl;
-      } else {
-        // Если нет ошибки, просто заменяем URL без хэша
-        window.history.replaceState(null, '', newUrl.toString());
-      }
       
       console.log('Fixed hash fragment in URL');
     }

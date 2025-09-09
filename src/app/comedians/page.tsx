@@ -11,19 +11,19 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase-client'
 
-// Данные комиков
+// Datele comedianților
 const comedians = [
   {
     id: 'aleksandr-ivanov',
-    name: 'Александр Иванов',
-    nickname: 'Саша Смех',
-    bio: 'Резидент Comedy Club Moldova. Мастер наблюдательной комедии и импровизации.',
-    experience: '5 лет',
-    style: ['Наблюдательная комедия', 'Импровизация', 'Стендап'],
+    name: 'Alexandru Ivanov',
+    nickname: 'Sașa Râs',
+    bio: 'Rezident Comedy Club Moldova. Maestru al comediei observaționale și al improvizației.',
+    experience: '5 ani',
+    style: ['Comedie observațională', 'Improvizație', 'Stand-up'],
     achievements: [
-      'Победитель Comedy Battle 2023',
-      'Резидент Comedy Club Moldova',
-      'Участник международных фестивалей'
+      'Câștigător Comedy Battle 2023',
+      'Rezident Comedy Club Moldova',
+      'Participant la festivaluri internaționale'
     ],
     avatar: '/comedians/aleksandr.jpg',
     rating: 4.8,
@@ -36,15 +36,15 @@ const comedians = [
   },
   {
     id: 'maria-petrova',
-    name: 'Мария Петрова',
-    nickname: 'Маша Угар',
-    bio: 'Единственная женщина-комик в Молдове, которая заставит вас плакать от смеха.',
-    experience: '3 года',
-    style: ['Женский юмор', 'Семейные темы', 'Социальная сатира'],
+    name: 'Maria Petrova',
+    nickname: 'Mașa Distracție',
+    bio: 'Singura femeie comediant din Moldova care te va face să plângi de râs.',
+    experience: '3 ani',
+    style: ['Umor feminin', 'Teme familiale', 'Satiră socială'],
     achievements: [
-      'Лучший дебют года 2022',
-      'Автор популярного YouTube канала',
-      'Ведущая комедийных шоу'
+      'Cel mai bun debut al anului 2022',
+      'Autor al unui canal YouTube popular',
+      'Prezentatoare de spectacole de comedie'
     ],
     avatar: '/comedians/maria.jpg',
     rating: 4.9,
@@ -57,15 +57,15 @@ const comedians = [
   },
   {
     id: 'dmitriy-sidorov',
-    name: 'Дмитрий Сидоров',
-    nickname: 'Дима Прикол',
-    bio: 'Король абсурдного юмора и неожиданных поворотов. Его шутки запомнятся надолго.',
-    experience: '7 лет',
-    style: ['Абсурдный юмор', 'Черная комедия', 'Интерактив'],
+    name: 'Dmitri Sidorov',
+    nickname: 'Dima Glumă',
+    bio: 'Regele umorului absurd și al întorsăturilor neașteptate. Glumele lui vor rămâne în memorie pentru mult timp.',
+    experience: '7 ani',
+    style: ['Umor absurd', 'Comedie neagră', 'Interactiv'],
     achievements: [
-      'Ветеран молдавской сцены',
-      'Организатор Stand-Up вечеров',
-      'Наставник молодых комиков'
+      'Veteran al scenei moldovenești',
+      'Organizator de seri Stand-Up',
+      'Mentor pentru comedianți tineri'
     ],
     avatar: '/comedians/dmitriy.jpg',
     rating: 4.7,
@@ -119,24 +119,24 @@ export default function ComediansPage() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-white">StandUp MD</h1>
-                <p className="text-sm text-gray-300">Комедия в Молдове</p>
+                <p className="text-sm text-gray-300">Comedie în Moldova</p>
               </div>
             </Link>
             
             <div className="flex items-center gap-4">
               <Link href="/">
                 <Button variant="ghost" className="text-white hover:bg-white/10">
-                  Главная
+                  Acasă
                 </Button>
               </Link>
               <Link href="/events">
                 <Button variant="ghost" className="text-white hover:bg-white/10">
-                  Мероприятия
+                  Evenimente
                 </Button>
               </Link>
               <Link href="/about">
                 <Button variant="ghost" className="text-white hover:bg-white/10">
-                  О нас
+                  Despre noi
                 </Button>
               </Link>
             </div>
@@ -153,10 +153,10 @@ export default function ComediansPage() {
           transition={{ duration: 0.6 }}
         >
           <h1 className="text-4xl lg:text-6xl font-bold text-white mb-4">
-            Наши Комики
+            Comedianții noștri
           </h1>
           <p className="text-xl text-gray-300 max-w-2xl mx-auto">
-            Познакомьтесь с талантливыми артистами, которые подарят вам незабываемые эмоции
+            Faceți cunoștință cu artiștii talentați care vă vor oferi emoții de neuitat
           </p>
         </motion.div>
 

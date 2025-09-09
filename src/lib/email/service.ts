@@ -194,12 +194,12 @@ class EmailService {
       userEmail,
       magicLink,
       expiresIn,
-      supportEmail: 'support@standupovka.md'
+      supportEmail: 'standupovkaclub@gmail.com'
     }))
 
     return this.sendEmail({
       to: userEmail,
-      subject: '🔐 Ваша ссылка для входа в Standup',
+      subject: '🔐 Link-ul dvs. de conectare la Standupovka',
       html,
       userId,
       emailType: 'magic_link'
@@ -242,7 +242,7 @@ class EmailService {
 
     return this.sendEmail({
       to: userEmail,
-      subject: `🎉 Оплата прошла успешно! Доступ к "${streamTitle || 'трансляции'}" активирован`,
+      subject: `🎉 Plata a fost procesată cu succes! Accesul la "${streamTitle || 'transmisiune'}" a fost activat`,
       html,
       userId,
       emailType: 'payment_success'

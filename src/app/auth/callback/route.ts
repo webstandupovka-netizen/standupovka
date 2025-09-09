@@ -18,7 +18,8 @@ export async function GET(request: NextRequest) {
   const type = searchParams.get('type')
 
   // Обработка ошибок из URL параметров
-  if (error) {
+  if (error && !accessToken) {
+    // Проверяем наличие access_token, чтобы избежать ложных ошибок при успешной аутентификации
     console.error('Auth callback URL error:', { error, errorCode, errorDescription })
     
     let errorMessage = 'auth_callback_error'
