@@ -11,10 +11,21 @@ interface ProxyConfig {
 export const createProxyFetch = (proxyConfig?: ProxyConfig) => {
   const shouldUseProxy = proxyConfig?.enabled && proxyConfig?.url
   
+  // Логирование для диагностики
+  console.log('🔧 Proxy configuration:', {
+    enabled: proxyConfig?.enabled,
+    hasUrl: !!proxyConfig?.url,
+    shouldUseProxy,
+    nodeEnv: process.env.NODE_ENV,
+    isVercel: !!process.env.VERCEL
+  })
+  
   if (!shouldUseProxy) {
-    // Возвращаем стандартный fetch если прокси не нужен
+    console.log('📡 Using standard fetch (no proxy)')
     return fetch
   }
+  
+  console.log('🔄 Using proxy fetch with URL:', proxyConfig.url)
 
   // Для Node.js окружения (серверная сторона)
   if (typeof window === 'undefined') {
@@ -31,28 +42,66 @@ export const createProxyFetch = (proxyConfig?: ProxyConfig) => {
         : new HttpProxyAgent(proxyConfig.url)
       
       return async (url: string | URL | Request, init?: RequestInit) => {
-        const options = {
-          ...init,
-          agent: agent
+        try {
+          const options = {
+            ...init,
+            agent: agent
+          }
+          
+          const response = await nodeFetch(url, options)
+          
+          // Создаем полностью совместимый Response объект
+          const responseObj = {
+            ok: response.ok,
+            status: response.status,
+            statusText: response.statusText,
+            headers: response.headers,
+            url: response.url,
+            redirected: response.redirected,
+            type: response.type,
+            // Методы с правильным контекстом
+            json: async () => {
+              try {
+                return await response.json()
+              } catch (error) {
+                throw new Error(`Failed to parse JSON: ${error}`)
+              }
+            },
+            text: async () => {
+              try {
+                return await response.text()
+              } catch (error) {
+                throw new Error(`Failed to get text: ${error}`)
+              }
+            },
+            blob: async () => {
+              try {
+                return await response.blob()
+              } catch (error) {
+                throw new Error(`Failed to get blob: ${error}`)
+              }
+            },
+            arrayBuffer: async () => {
+              try {
+                return await response.arrayBuffer()
+              } catch (error) {
+                throw new Error(`Failed to get arrayBuffer: ${error}`)
+              }
+            },
+            clone: () => {
+              try {
+                return response.clone()
+              } catch (error) {
+                throw new Error(`Failed to clone response: ${error}`)
+              }
+            }
+          }
+          
+          return responseObj as Response
+        } catch (error) {
+          console.error('Proxy fetch error:', error)
+          throw error
         }
-        
-        const response = await nodeFetch(url, options)
-        
-        // Создаем Response-совместимый объект
-        return {
-          ok: response.ok,
-          status: response.status,
-          statusText: response.statusText,
-          headers: response.headers,
-          json: () => response.json(),
-          text: () => response.text(),
-          blob: () => response.blob(),
-          arrayBuffer: () => response.arrayBuffer(),
-          url: response.url,
-          redirected: response.redirected,
-          type: response.type,
-          clone: () => response.clone()
-        } as Response
       }
     } catch (error) {
       console.warn('node-fetch or proxy agents not available, falling back to native fetch')
