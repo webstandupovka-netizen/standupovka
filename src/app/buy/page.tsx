@@ -242,15 +242,13 @@ function BuyPageInner() {
               </div>
 
               {/* Posterul evenimentului */}
-              {stream.poster_url && (
-                <div className="w-full max-w-[600px] h-[250px] md:h-[400px]">
-                  <img 
-                    src={stream.poster_url} 
-                    alt={stream.title}
-                    className="w-full h-full object-cover rounded-xl md:rounded-2xl"
-                  />
-                </div>
-              )}
+              <div className="w-full max-w-[600px] h-[250px] md:h-[400px]">
+                <img 
+                  src="/event_poster.jpg" 
+                  alt={stream.title}
+                  className="w-full h-full object-cover rounded-xl md:rounded-2xl"
+                />
+              </div>
 
               {/* Informații despre dată și status */}
               <div className="space-y-4">
