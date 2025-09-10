@@ -242,7 +242,7 @@ function BuyPageInner() {
               </div>
 
               {/* Posterul evenimentului */}
-              <div className="w-full max-w-[600px] h-[250px] md:h-[400px]">
+              <div className="w-full max-w-[400px] aspect-square">
                 <img 
                   src="/event_poster.jpg" 
                   alt={stream.title}
