@@ -137,23 +137,45 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
 
   // Защита от горячих клавиш
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    // Блокируем различные комбинации для открытия DevTools
+    // Блокируем все возможные комбинации для открытия DevTools
     if (
-      // Windows/Linux: Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C, F12
-      (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) ||
-      // macOS: Cmd+Option+I, Cmd+Option+J, Cmd+Option+C
-      (e.metaKey && e.altKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c')) ||
       // F12 на всех платформах
       e.key === 'F12' ||
-      // Блокируем сохранение и просмотр исходного кода
-      (e.ctrlKey && (e.key === 's' || e.key === 'u')) ||
-      (e.metaKey && (e.key === 's' || e.key === 'u')) ||
-      // Дополнительные комбинации
-      (e.ctrlKey && e.shiftKey && e.key === 'Delete') || // Очистка кэша
-      (e.metaKey && e.shiftKey && e.key === 'Delete')
+      
+      // Windows/Linux комбинации
+      (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C' || e.key === 'K')) ||
+      (e.ctrlKey && e.key === 'U') || // Просмотр исходного кода
+      (e.ctrlKey && e.key === 'S') || // Сохранение страницы
+      
+      // macOS комбинации (Cmd = metaKey)
+      (e.metaKey && e.altKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c' || e.key === 'K' || e.key === 'k')) ||
+      (e.metaKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c')) ||
+      (e.metaKey && (e.key === 'U' || e.key === 'u')) || // Просмотр исходного кода
+      (e.metaKey && (e.key === 'S' || e.key === 's')) || // Сохранение страницы
+      
+      // Дополнительные комбинации для разных браузеров
+      (e.ctrlKey && e.shiftKey && e.key === 'Delete') || // Очистка кэша Windows
+      (e.metaKey && e.shiftKey && e.key === 'Delete') || // Очистка кэша macOS
+      (e.ctrlKey && e.shiftKey && e.key === 'R') || // Жесткая перезагрузка Windows
+      (e.metaKey && e.shiftKey && e.key === 'R') || // Жесткая перезагрузка macOS
+      
+      // Альтернативные комбинации для консоли
+      (e.altKey && e.ctrlKey && e.key === 'J') || // Alt+Ctrl+J
+      (e.altKey && e.metaKey && e.key === 'J') || // Alt+Cmd+J для некоторых браузеров
+      
+      // Блокировка Escape (может закрывать модальные окна защиты)
+      e.key === 'Escape' ||
+      
+      // Блокировка Tab (навигация по элементам)
+      e.key === 'Tab' ||
+      
+      // Блокировка Enter в некоторых контекстах
+      (e.ctrlKey && e.key === 'Enter') ||
+      (e.metaKey && e.key === 'Enter')
     ) {
       e.preventDefault()
       e.stopPropagation()
+      e.stopImmediatePropagation()
       return false
     }
   }, [])
@@ -164,29 +186,50 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
       try {
         // Блокировка консоли
         const n = () => {}
-        ;['log', 'debug', 'info', 'warn', 'error', 'table', 'trace'].forEach(m => {
+        ;['log', 'debug', 'info', 'warn', 'error', 'table', 'trace', 'clear', 'dir', 'dirxml', 'group', 'groupEnd', 'time', 'timeEnd', 'assert', 'profile'].forEach(m => {
           if (console[m as keyof Console]) {
             (console as any)[m] = n
           }
         })
         
-        // Защита от отладки
+        // Переопределяем toString для скрытия функций
+        Object.defineProperty(console, 'toString', {
+          value: () => '[object Console]',
+          writable: false,
+          configurable: false
+        })
+        
+        // Защита от отладки - множественные проверки
         const checkDevTools = () => {
           const s = performance.now()
           debugger
           const e = performance.now()
           if (e - s > 100) {
-            // Перенаправляем на пустую страницу при обнаружении DevTools
             window.location.href = 'about:blank'
           }
         }
         
-        // Проверяем каждую секунду
-        setInterval(checkDevTools, 1000)
+        // Дополнительная проверка через eval
+        const checkDevToolsEval = () => {
+          try {
+            const start = Date.now()
+            eval('debugger')
+            const end = Date.now()
+            if (end - start > 100) {
+              window.location.href = 'about:blank'
+            }
+          } catch (e) {
+            // Игнорируем ошибки
+          }
+        }
         
-        // Дополнительная проверка размера окна (DevTools изменяют размер)
+        // Проверяем каждые 500ms разными методами
+        setInterval(checkDevTools, 500)
+        setInterval(checkDevToolsEval, 700)
+        
+        // Проверка размера окна с более низким порогом
         let devtools = {open: false, orientation: null}
-        const threshold = 160
+        const threshold = 120 // Снижен порог для более чувствительного обнаружения
         
         setInterval(() => {
           if (window.outerHeight - window.innerHeight > threshold || 
@@ -198,17 +241,48 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
           } else {
             devtools.open = false
           }
-        }, 500)
+        }, 300)
+        
+        // Проверка через изменение размера viewport
+        let lastInnerWidth = window.innerWidth
+        let lastInnerHeight = window.innerHeight
+        
+        setInterval(() => {
+          if (Math.abs(window.innerWidth - lastInnerWidth) > 100 || 
+              Math.abs(window.innerHeight - lastInnerHeight) > 100) {
+            window.location.href = 'about:blank'
+          }
+          lastInnerWidth = window.innerWidth
+          lastInnerHeight = window.innerHeight
+        }, 400)
+        
+        // Блокировка инспектора элементов через события мыши
+        document.addEventListener('selectstart', (e) => {
+          e.preventDefault()
+          return false
+        })
         
         // Защита от прямого доступа к URL
         const originalOpen = window.open
         window.open = function(url, ...args) {
           if (url && typeof url === 'string' && url.includes('.mp4')) {
-            console.warn('Прямой доступ к видео заблокирован')
             return null
           }
           return originalOpen.call(this, url, ...args)
         }
+        
+        // Блокировка Firebug
+        if (window.console && (window.console as any).firebug) {
+          window.location.href = 'about:blank'
+        }
+        
+        // Проверка на наличие расширений разработчика
+        if (typeof (window as any).devtools !== 'undefined' || 
+            typeof (window as any).__REACT_DEVTOOLS_GLOBAL_HOOK__ !== 'undefined' ||
+            typeof (window as any).__VUE_DEVTOOLS_GLOBAL_HOOK__ !== 'undefined') {
+          window.location.href = 'about:blank'
+        }
+        
       } catch (e) {
         // Игнорируем ошибки
       }
