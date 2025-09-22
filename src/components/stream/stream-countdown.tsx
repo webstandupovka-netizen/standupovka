@@ -116,14 +116,8 @@ export function StreamCountdown({
           >
             <Play className="h-16 w-16 md:h-20 md:w-20 mx-auto mb-4 md:mb-6 text-green-400" />
           </motion.div>
-          <h2 className="text-2xl md:text-3xl font-bold mb-3 md:mb-4 text-green-400">
-            🎉 Трансляция началась!
-          </h2>
           <p className="text-base md:text-lg text-gray-300 mb-2">
             {streamTitle}
-          </p>
-          <p className="text-xs md:text-sm text-gray-400">
-            Обновите страницу, если видео не загрузилось
           </p>
         </motion.div>
       </div>
