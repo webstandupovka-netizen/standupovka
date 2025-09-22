@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-client'
 import { VideoPlayer } from '@/components/video/video-player'
 import YouTubePlayer from '@/components/video/YouTubePlayer'
+import SecureVideoPlayer from '@/components/video/SecureVideoPlayer'
 import { StreamCountdown } from '@/components/stream/stream-countdown'
 import { CloseStreamButton } from '@/components/stream/close-stream-button'
 import { UserStatus } from '@/components/auth/user-status'
@@ -348,13 +349,14 @@ export default function StreamPage() {
                         title={stream.title}
                       />
                     )
-                  ) : // Если стрим не активен, но есть запись - показываем YouTube
+                  ) : // Если стрим не активен, но есть запись - показываем защищенный плеер
                   stream.recorded_video_url ? (
-                    <YouTubePlayer
-                       videoUrl={stream.recorded_video_url}
+                    <SecureVideoPlayer
+                       src={stream.recorded_video_url}
                        title={stream.title}
                        userEmail={session?.user?.email}
                        className="w-full h-full rounded-2xl"
+                       poster={stream.poster_url}
                      />
                   ) : // Иначе показываем countdown или подготовку
                   stream.castr_playback_url || stream.castr_embed_url ? (

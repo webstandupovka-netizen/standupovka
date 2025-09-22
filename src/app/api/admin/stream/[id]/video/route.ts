@@ -34,8 +34,15 @@ async function checkAdminAccess(request: NextRequest) {
   return true
 }
 
-// Функция для валидации YouTube URL
-function isValidYouTubeUrl(url: string): boolean {
+// Функция для валидации видео URL (поддерживает MP4 и YouTube)
+function isValidVideoUrl(url: string): boolean {
+  // Проверяем MP4 ссылки
+  const mp4Regex = /^https?:\/\/.+\.(mp4|MP4)(\?.*)?$/
+  if (mp4Regex.test(url)) {
+    return true
+  }
+  
+  // Проверяем YouTube ссылки для обратной совместимости
   const youtubeRegex = /^https:\/\/(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/
   return youtubeRegex.test(url)
 }
@@ -66,9 +73,9 @@ export async function POST(
       )
     }
 
-    if (!isValidYouTubeUrl(recorded_video_url)) {
+    if (!isValidVideoUrl(recorded_video_url)) {
       return NextResponse.json(
-        { error: 'Invalid YouTube URL format' },
+        { error: 'Invalid video URL format. Please provide a valid MP4 or YouTube URL.' },
         { status: 400 }
       )
     }
@@ -87,7 +94,7 @@ export async function POST(
       )
     }
 
-    // Обновляем запись стрима с YouTube URL
+    // Обновляем запись стрима с видео URL
     const { data: updatedStream, error: updateError } = await supabase
       .from('stream_settings')
       .update({ 

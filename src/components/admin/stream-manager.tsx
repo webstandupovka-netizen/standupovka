@@ -401,48 +401,45 @@ export function StreamManager({ streamId }: StreamManagerProps) {
         </CardContent>
       </Card>
 
-      {/* Управление YouTube записью */}
+      {/* Управление видео записью */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Youtube className="h-5 w-5" />
-            YouTube запись стрима
+            Видео запись стрима
           </CardTitle>
           <CardDescription>
-            Добавьте ссылку на YouTube видео для воспроизведения записи стрима
+            Добавьте прямую ссылку на MP4 видео для воспроизведения записи стрима
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div>
-            <Label htmlFor="youtube-url">YouTube URL</Label>
+            <Label htmlFor="video-url">Прямая ссылка на MP4 видео</Label>
             <Input
-              id="youtube-url"
+              id="video-url"
               value={recordedVideoUrl}
               onChange={(e) => setRecordedVideoUrl(e.target.value)}
-              placeholder="https://www.youtube.com/watch?v=VIDEO_ID или https://youtu.be/VIDEO_ID"
+              placeholder="https://line.mediashowgrup.md/stand.mp4"
               className="mt-1"
             />
             <p className="text-sm text-muted-foreground mt-1">
-              Вставьте полную ссылку на YouTube видео. Поддерживаются форматы: youtube.com/watch?v= и youtu.be/
+              Вставьте прямую ссылку на MP4 файл. Видео будет воспроизводиться с защитой от скачивания и адаптивным качеством.
             </p>
           </div>
 
-          {recordedVideoUrl && (
+          {recordedVideoUrl && recordedVideoUrl.endsWith('.mp4') && (
             <div>
               <Label>Предварительный просмотр</Label>
               <div className="mt-2 aspect-video bg-black rounded-lg overflow-hidden">
-                <iframe
-                  src={`https://www.youtube.com/embed/${recordedVideoUrl.includes('youtu.be/') 
-                    ? recordedVideoUrl.split('youtu.be/')[1]?.split('?')[0] 
-                    : recordedVideoUrl.includes('watch?v=') 
-                      ? recordedVideoUrl.split('watch?v=')[1]?.split('&')[0]
-                      : ''}`}
-                  className="w-full h-full"
-                  frameBorder="0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  title="YouTube Preview"
-                />
+                <video
+                  src={recordedVideoUrl}
+                  className="w-full h-full object-cover"
+                  controls
+                  preload="metadata"
+                  onError={(e) => console.error('Ошибка загрузки видео:', e)}
+                >
+                  Ваш браузер не поддерживает воспроизведение видео.
+                </video>
               </div>
             </div>
           )}
@@ -460,7 +457,7 @@ export function StreamManager({ streamId }: StreamManagerProps) {
             ) : (
               <>
                 <Save className="h-4 w-4 mr-2" />
-                Сохранить YouTube ссылку
+                Сохранить видео ссылку
               </>
             )}
           </Button>

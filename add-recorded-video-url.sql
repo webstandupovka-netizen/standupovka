@@ -5,7 +5,7 @@ ALTER TABLE stream_settings
 ADD COLUMN IF NOT EXISTS recorded_video_url TEXT;
 
 -- Добавляем комментарий к полю для документации
-COMMENT ON COLUMN stream_settings.recorded_video_url IS 'URL YouTube видео для воспроизведения записи стрима';
+COMMENT ON COLUMN stream_settings.recorded_video_url IS 'URL видео для воспроизведения записи стрима (поддерживает MP4 и YouTube ссылки)';
 
 -- Проверяем, что поле добавлено успешно
 SELECT column_name, data_type, is_nullable 
