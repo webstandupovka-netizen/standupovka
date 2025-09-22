@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase-client'
 import { VideoPlayer } from '@/components/video/video-player'
+import YouTubePlayer from '@/components/video/YouTubePlayer'
 import { StreamCountdown } from '@/components/stream/stream-countdown'
 import { CloseStreamButton } from '@/components/stream/close-stream-button'
 import { UserStatus } from '@/components/auth/user-status'
@@ -24,6 +25,7 @@ interface StreamData {
   castr_rtmp_url?: string
   castr_stream_key?: string
   castr_playback_url?: string
+  recorded_video_url?: string
   stream_start_time: string
   stream_end_time?: string
   poster_url?: string
@@ -47,6 +49,7 @@ export default function StreamPage() {
   const [error, setError] = useState<string | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
   const [canStream, setCanStream] = useState(false)
+  const [session, setSession] = useState<any>(null)
   
   const router = useRouter()
   const supabase = createClient()
@@ -56,6 +59,7 @@ export default function StreamPage() {
       try {
         // Проверяем аутентификацию
         const { data: { session } } = await supabase.auth.getSession()
+        setSession(session)
         
         if (!session) {
           // Сохраняем полный URL с параметрами при редиректе на логин
@@ -312,41 +316,64 @@ export default function StreamPage() {
             <div className="relative bg-black rounded-xl md:rounded-2xl overflow-hidden border border-[#333333] shadow-2xl">
               <div className="aspect-video bg-gradient-to-br from-black via-[#111111] to-black">
                 {canStream ? (
-                  stream.castr_playback_url ? (
-                    stream.castr_playback_url.includes('player.castr.com') ? (
+                  // Если стрим активен и есть live URL - показываем live
+                  stream.is_live && (stream.castr_playback_url || stream.castr_embed_url) ? (
+                    stream.castr_playback_url ? (
+                      stream.castr_playback_url.includes('player.castr.com') ? (
+                        <iframe
+                          src={stream.castr_playback_url}
+                          className="w-full h-full rounded-2xl"
+                          frameBorder="0"
+                          allow="autoplay; fullscreen; picture-in-picture"
+                          allowFullScreen
+                          title={stream.title}
+                        />
+                      ) : (
+                        <VideoPlayer
+                          type="hls"
+                          src={stream.castr_playback_url}
+                          poster={stream.poster_url}
+                          onPlay={() => setIsPlaying(true)}
+                          onPause={() => setIsPlaying(false)}
+                          className="w-full h-full rounded-2xl"
+                        />
+                      )
+                    ) : (
                       <iframe
-                        src={stream.castr_playback_url}
+                        src={stream.castr_embed_url!}
                         className="w-full h-full rounded-2xl"
                         frameBorder="0"
                         allow="autoplay; fullscreen; picture-in-picture"
                         allowFullScreen
                         title={stream.title}
                       />
-                    ) : (
-                      <VideoPlayer
-                        type="hls"
-                        src={stream.castr_playback_url}
-                        poster={stream.poster_url}
-                        onPlay={() => setIsPlaying(true)}
-                        onPause={() => setIsPlaying(false)}
-                        className="w-full h-full rounded-2xl"
-                      />
                     )
-                  ) : stream.castr_embed_url ? (
-                    <iframe
-                      src={stream.castr_embed_url}
-                      className="w-full h-full rounded-2xl"
-                      frameBorder="0"
-                      allow="autoplay; fullscreen; picture-in-picture"
-                      allowFullScreen
-                      title={stream.title}
-                    />
-                  ) : (
+                  ) : // Если стрим не активен, но есть запись - показываем YouTube
+                  stream.recorded_video_url ? (
+                    <YouTubePlayer
+                       videoUrl={stream.recorded_video_url}
+                       title={stream.title}
+                       userEmail={session?.user?.email}
+                       className="w-full h-full rounded-2xl"
+                     />
+                  ) : // Иначе показываем countdown или подготовку
+                  stream.castr_playback_url || stream.castr_embed_url ? (
                     <StreamCountdown 
                       streamStartTime={stream.stream_start_time}
                       streamTitle={stream.title}
                       className="w-full h-full rounded-2xl"
                     />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#111111] to-black rounded-2xl">
+                      <div className="text-center text-[#F2F2F2] p-4 md:p-8 max-w-md mx-auto">
+                        <div className="relative mb-4 md:mb-6">
+                          <div className="absolute inset-0 bg-[#10C23F]/20 rounded-full blur-xl" />
+                          <Play className="h-12 w-12 md:h-20 md:w-20 mx-auto text-[#10C23F] relative z-10" />
+                        </div>
+                        <h3 className="text-lg md:text-2xl font-bold mb-2 leading-tight">Pregătire pentru transmisie</h3>
+                        <p className="text-[#CCCCCC] text-sm md:text-lg leading-relaxed">Verificați statusul sesiunii de mai sus pentru a începe vizionarea</p>
+                      </div>
+                    </div>
                   )
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#111111] to-black">

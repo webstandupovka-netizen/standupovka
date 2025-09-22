@@ -34,22 +34,29 @@ export async function middleware(request: NextRequest) {
   }
 
   const isAuthenticated = !!session?.user
+  const isAdmin = isAdminAuthenticated(request)
 
   const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route))
   const isAuthRoute = authRoutes.some(route => pathname.startsWith(route))
   const isAdminRoute = adminRoutes.some(route => pathname.startsWith(route))
   const isPublicAdminRoute = publicAdminRoutes.some(route => pathname.startsWith(route))
 
-  // Логика для админских маршрутов
-  if (isAdminRoute && !isPublicAdminRoute) {
-    const isAdmin = await isAdminAuthenticated(request)
-    if (!isAdmin) {
-      return NextResponse.redirect(new URL('/admin/login', request.url))
+  // Если админ авторизован, предоставляем доступ ко всем страницам (кроме проверки админских маршрутов)
+  if (isAdmin) {
+    // Логика для админских маршрутов
+    if (isAdminRoute && !isPublicAdminRoute) {
+      return response // админ уже авторизован
     }
+    return response
   }
 
-  // Если пользователь не аутентифицирован и пытается получить доступ к защищенному маршруту
-  if (!isAuthenticated && isProtectedRoute) {
+  // Логика для админских маршрутов (если админ не авторизован)
+  if (isAdminRoute && !isPublicAdminRoute) {
+    return NextResponse.redirect(new URL('/admin/login', request.url))
+  }
+
+  // Если пользователь не аутентифицирован и не админ, и пытается получить доступ к защищенному маршруту
+  if (!isAuthenticated && !isAdmin && isProtectedRoute) {
     const redirectUrl = new URL('/auth/login', request.url)
     const fullPath = pathname + request.nextUrl.search
     redirectUrl.searchParams.set('redirect', fullPath)

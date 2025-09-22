@@ -135,7 +135,7 @@ export function EventBlock({ user, hasAccess }: EventBlockProps) {
               <Link href="/auth/login">
                 <div className="bg-blue-600 hover:bg-blue-700 rounded-xl p-3 md:p-4 flex items-center gap-2 md:gap-3 w-fit cursor-pointer transition-all duration-200">
                   <img src="/live-icon.svg" alt="Login" className="w-5 h-5 md:w-6 md:h-6" />
-                  <span className="text-white font-bold text-sm md:text-base uppercase">autentificare pentru acces</span>
+                  <span className="text-white font-bold text-sm md:text-base uppercase">Privește Așa, Bună Seara - Revanșa</span>
                 </div>
               </Link>
             )}

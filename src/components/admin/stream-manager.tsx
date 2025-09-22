@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
-import { AlertCircle, CheckCircle, Play, Square, Settings, Video, ExternalLink } from 'lucide-react'
+import { AlertCircle, CheckCircle, Play, Square, Settings, Video, ExternalLink, Youtube, Save } from 'lucide-react'
 import { motion } from 'framer-motion'
 
 interface StreamData {
@@ -18,6 +18,7 @@ interface StreamData {
   castr_rtmp_url?: string
   castr_stream_key?: string
   castr_playback_url?: string
+  recorded_video_url?: string
   stream_start_time: string
   stream_end_time?: string
   poster_url?: string
@@ -40,8 +41,10 @@ export function StreamManager({ streamId }: StreamManagerProps) {
   const [castrRtmpUrl, setCastrRtmpUrl] = useState('rtmp://fr.castr.io/static')
   const [castrStreamKey, setCastrStreamKey] = useState('live_691333907e6811f09d8453d91b8ad2ad?password=82943a02')
   const [castrPlaybackUrl, setCastrPlaybackUrl] = useState('https://player.castr.com/live_691333907e6811f09d8453d91b8ad2ad')
+  const [recordedVideoUrl, setRecordedVideoUrl] = useState('')
   const [isLive, setIsLive] = useState(false)
   const [isActive, setIsActive] = useState(true)
+  const [savingVideo, setSavingVideo] = useState(false)
 
   useEffect(() => {
     fetchStreamData()
@@ -61,6 +64,7 @@ export function StreamManager({ streamId }: StreamManagerProps) {
       setCastrRtmpUrl(data.castr_rtmp_url || '')
       setCastrStreamKey(data.castr_stream_key || '')
       setCastrPlaybackUrl(data.castr_playback_url || '')
+      setRecordedVideoUrl(data.recorded_video_url || '')
       setIsLive(data.is_live)
       setIsActive(data.is_active)
     } catch (error) {
@@ -102,6 +106,34 @@ export function StreamManager({ streamId }: StreamManagerProps) {
       console.error('Ошибка обновления настроек')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const updateRecordedVideo = async () => {
+    try {
+      setSavingVideo(true)
+      const response = await fetch(`/api/admin/stream/${streamId}/video`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          recorded_video_url: recordedVideoUrl || null,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to update recorded video URL')
+      }
+
+      console.log('YouTube ссылка обновлена')
+      await fetchStreamData() // Обновляем данные
+    } catch (error) {
+      console.error('Error updating recorded video:', error)
+      console.error('Ошибка обновления YouTube ссылки')
+    } finally {
+      setSavingVideo(false)
     }
   }
 
@@ -369,6 +401,71 @@ export function StreamManager({ streamId }: StreamManagerProps) {
         </CardContent>
       </Card>
 
+      {/* Управление YouTube записью */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Youtube className="h-5 w-5" />
+            YouTube запись стрима
+          </CardTitle>
+          <CardDescription>
+            Добавьте ссылку на YouTube видео для воспроизведения записи стрима
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div>
+            <Label htmlFor="youtube-url">YouTube URL</Label>
+            <Input
+              id="youtube-url"
+              value={recordedVideoUrl}
+              onChange={(e) => setRecordedVideoUrl(e.target.value)}
+              placeholder="https://www.youtube.com/watch?v=VIDEO_ID или https://youtu.be/VIDEO_ID"
+              className="mt-1"
+            />
+            <p className="text-sm text-muted-foreground mt-1">
+              Вставьте полную ссылку на YouTube видео. Поддерживаются форматы: youtube.com/watch?v= и youtu.be/
+            </p>
+          </div>
+
+          {recordedVideoUrl && (
+            <div>
+              <Label>Предварительный просмотр</Label>
+              <div className="mt-2 aspect-video bg-black rounded-lg overflow-hidden">
+                <iframe
+                  src={`https://www.youtube.com/embed/${recordedVideoUrl.includes('youtu.be/') 
+                    ? recordedVideoUrl.split('youtu.be/')[1]?.split('?')[0] 
+                    : recordedVideoUrl.includes('watch?v=') 
+                      ? recordedVideoUrl.split('watch?v=')[1]?.split('&')[0]
+                      : ''}`}
+                  className="w-full h-full"
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  title="YouTube Preview"
+                />
+              </div>
+            </div>
+          )}
+
+          <Button
+            onClick={updateRecordedVideo}
+            disabled={savingVideo}
+            className="w-full"
+          >
+            {savingVideo ? (
+              <>
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                Сохранение...
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4 mr-2" />
+                Сохранить YouTube ссылку
+              </>
+            )}
+          </Button>
+        </CardContent>
+      </Card>
 
     </div>
   )

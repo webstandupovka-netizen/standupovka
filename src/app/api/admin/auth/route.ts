@@ -73,6 +73,7 @@ export async function POST(request: NextRequest) {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
+      path: '/',
       maxAge: 24 * 60 * 60 // 24 часа
     })
 
@@ -92,7 +93,13 @@ export async function DELETE(request: NextRequest) {
   const response = NextResponse.json({ success: true })
   
   // Удаляем cookie с токеном
-  response.cookies.delete('admin-token')
+  response.cookies.set('admin-token', '', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 0
+  })
   
   return response
 }

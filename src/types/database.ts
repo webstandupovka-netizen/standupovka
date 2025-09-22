@@ -87,6 +87,7 @@ export interface StreamSettings {
   castr_stream_key?: string
   castr_playback_url?: string
   poster_url?: string
+  recorded_video_url?: string
   stream_start_time: string
   stream_end_time?: string
   price: number

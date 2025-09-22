@@ -1,7 +1,7 @@
 import { NextRequest } from 'next/server'
 import { SignJWT, jwtVerify } from 'jose'
 
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET || 'your-secret-key')
+const JWT_SECRET = new TextEncoder().encode(process.env.SUPABASE_JWT_SECRET || 'your-secret-key')
 
 export interface AdminPayload {
   adminId: string
