@@ -285,7 +285,7 @@ export default function StreamPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="mb-8 md:mb-12 text-center px-2"
+          className="mb-8 md:mb-12 text-center px-2 landscape-hide"
         >
           <h1 className="text-2xl md:text-4xl lg:text-5xl xl:text-6xl font-bold text-[#F2F2F2] mb-4 md:mb-6 leading-tight">
             {stream.title}
@@ -315,7 +315,7 @@ export default function StreamPage() {
           >
             {/* Video Container */}
             <div className="relative bg-black rounded-xl md:rounded-2xl overflow-hidden border border-[#333333] shadow-2xl">
-              <div className="aspect-video bg-gradient-to-br from-black via-[#111111] to-black">
+              <div className="aspect-video bg-gradient-to-br from-black via-[#111111] to-black" style={{maxHeight: 'min(70vh, 500px)'}}>
                 {canStream ? (
                   // Если стрим активен и есть live URL - показываем live
                   stream.is_live && (stream.castr_playback_url || stream.castr_embed_url) ? (

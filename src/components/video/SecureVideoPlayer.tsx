@@ -230,8 +230,15 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
         // Проверка размера окна с более низким порогом
         let devtools = {open: false, orientation: null}
         const threshold = 120 // Снижен порог для более чувствительного обнаружения
+        let lastOrientation = window.orientation
         
         setInterval(() => {
+          // Игнорируем изменения размера при повороте экрана
+          if (window.orientation !== lastOrientation) {
+            lastOrientation = window.orientation
+            return
+          }
+          
           if (window.outerHeight - window.innerHeight > threshold || 
               window.outerWidth - window.innerWidth > threshold) {
             if (!devtools.open) {
@@ -243,11 +250,19 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
           }
         }, 300)
         
-        // Проверка через изменение размера viewport
+        // Проверка через изменение размера viewport с учетом ориентации
         let lastInnerWidth = window.innerWidth
         let lastInnerHeight = window.innerHeight
         
         setInterval(() => {
+          // Игнорируем изменения размера при повороте экрана
+          if (window.orientation !== lastOrientation) {
+            lastOrientation = window.orientation
+            lastInnerWidth = window.innerWidth
+            lastInnerHeight = window.innerHeight
+            return
+          }
+          
           if (Math.abs(window.innerWidth - lastInnerWidth) > 100 || 
               Math.abs(window.innerHeight - lastInnerHeight) > 100) {
             window.location.href = 'about:blank'
@@ -255,6 +270,17 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
           lastInnerWidth = window.innerWidth
           lastInnerHeight = window.innerHeight
         }, 400)
+        
+        // Обработка изменения ориентации экрана
+        const handleOrientationChange = () => {
+          setTimeout(() => {
+            lastOrientation = window.orientation
+            lastInnerWidth = window.innerWidth
+            lastInnerHeight = window.innerHeight
+          }, 100)
+        }
+        
+        window.addEventListener('orientationchange', handleOrientationChange)
         
         // Блокировка инспектора элементов через события мыши
         document.addEventListener('selectstart', (e) => {
@@ -468,17 +494,58 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
   }
 
   // Полноэкранный режим
-  const toggleFullscreen = () => {
+  const toggleFullscreen = async () => {
     if (!containerRef.current) return
 
-    if (!document.fullscreenElement) {
-      containerRef.current.requestFullscreen()
-      setState(prev => ({ ...prev, isFullscreen: true }))
-    } else {
-      document.exitFullscreen()
-      setState(prev => ({ ...prev, isFullscreen: false }))
+    try {
+      if (!document.fullscreenElement) {
+        await containerRef.current.requestFullscreen()
+      } else {
+        await document.exitFullscreen()
+      }
+    } catch (error) {
+      console.error('Ошибка переключения полноэкранного режима:', error)
     }
   }
+
+  // Обработка изменений полноэкранного режима
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      const isFullscreen = !!document.fullscreenElement
+      setState(prev => ({ ...prev, isFullscreen }))
+      
+      // Принудительно обновляем размеры видео при выходе из полноэкранного режима
+      if (!isFullscreen && videoRef.current) {
+        setTimeout(() => {
+          if (videoRef.current) {
+            videoRef.current.style.width = '100%'
+            videoRef.current.style.height = 'auto'
+          }
+        }, 100)
+      }
+    }
+
+    const handleFullscreenError = (event: Event) => {
+      console.error('Ошибка полноэкранного режима:', event)
+      setState(prev => ({ ...prev, isFullscreen: false }))
+    }
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange)
+    document.addEventListener('fullscreenerror', handleFullscreenError)
+    
+    // Для различных браузеров
+    document.addEventListener('webkitfullscreenchange', handleFullscreenChange)
+    document.addEventListener('mozfullscreenchange', handleFullscreenChange)
+    document.addEventListener('msfullscreenchange', handleFullscreenChange)
+
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullscreenChange)
+      document.removeEventListener('fullscreenerror', handleFullscreenError)
+      document.removeEventListener('webkitfullscreenchange', handleFullscreenChange)
+      document.removeEventListener('mozfullscreenchange', handleFullscreenChange)
+      document.removeEventListener('msfullscreenchange', handleFullscreenChange)
+    }
+  }, [])
 
   // Переключение настроек
   const toggleSettings = () => {
@@ -585,7 +652,12 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
   return (
     <div 
       ref={containerRef}
-      className={cn('relative bg-black rounded-lg overflow-hidden w-full aspect-video select-none', className)}
+      data-fullscreen={state.isFullscreen}
+      className={cn(
+        'relative bg-black rounded-lg overflow-hidden w-full aspect-video select-none',
+        state.isFullscreen && 'video-fullscreen',
+        className
+      )}
       onContextMenu={handleContextMenu}
       onDragStart={handleDragStart}
       onMouseEnter={handleMouseEnter}
@@ -602,7 +674,10 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
       {/* Основное видео */}
       <video
         ref={videoRef}
-        className="w-full h-full object-cover"
+        className={cn(
+          'w-full h-full object-cover',
+          state.isFullscreen && 'object-contain'
+        )}
         poster={poster}
         onContextMenu={handleContextMenu}
         onDragStart={handleDragStart}

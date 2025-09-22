@@ -168,3 +168,116 @@
     transform: translateX(0);
   }
 }
+
+/* Стили для мобильной горизонтальной ориентации */
+@media screen and (orientation: landscape) and (max-height: 500px) {
+  /* Уменьшаем отступы для экономии места */
+  .container {
+    @apply px-2 py-2;
+  }
+  
+  /* Адаптируем размеры текста */
+  h1 {
+    @apply text-xl md:text-2xl;
+  }
+  
+  h2 {
+    @apply text-lg md:text-xl;
+  }
+  
+  /* Оптимизируем видео контейнер */
+  .aspect-video {
+    aspect-ratio: 16 / 9;
+    max-height: 70vh;
+  }
+  
+  /* Скрываем лишние элементы в горизонтальном режиме */
+  .landscape-hide {
+    @apply hidden;
+  }
+  
+  /* Компактные кнопки */
+  .btn-compact {
+    @apply px-2 py-1 text-sm;
+  }
+}
+
+/* Дополнительные стили для очень маленьких экранов в горизонтальном режиме */
+@media screen and (orientation: landscape) and (max-height: 400px) {
+  .container {
+    @apply px-1 py-1;
+  }
+  
+  .aspect-video {
+    max-height: 60vh;
+  }
+  
+  /* Минимальные отступы */
+  .p-4 {
+    @apply p-2;
+  }
+  
+  .py-6 {
+    @apply py-2;
+  }
+  
+  .mb-8 {
+    @apply mb-4;
+  }
+}
+
+/* Фиксы для iOS Safari в горизонтальном режиме */
+@supports (-webkit-touch-callout: none) {
+  @media screen and (orientation: landscape) {
+    body {
+      height: 100vh;
+      height: -webkit-fill-available;
+    }
+    
+    .min-h-screen {
+      min-height: 100vh;
+      min-height: -webkit-fill-available;
+    }
+  }
+}
+
+/* Стили для полноэкранного режима видео */
+body:has([data-fullscreen="true"]) {
+  overflow: hidden;
+}
+
+/* Полноэкранный контейнер */
+.video-fullscreen {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  z-index: 9999 !important;
+  background: black !important;
+  border-radius: 0 !important;
+}
+
+/* Полноэкранное видео */
+.video-fullscreen video {
+  width: 100vw !important;
+  height: 100vh !important;
+  object-fit: contain !important;
+}
+
+/* Скрытие элементов при полноэкранном режиме */
+:fullscreen {
+  background: black;
+}
+
+:-webkit-full-screen {
+  background: black;
+}
+
+:-moz-full-screen {
+  background: black;
+}
+
+:-ms-fullscreen {
+  background: black;
+}
