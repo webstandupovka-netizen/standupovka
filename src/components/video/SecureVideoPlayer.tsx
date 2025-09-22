@@ -149,7 +149,10 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
       // macOS комбинации (Cmd = metaKey)
       (e.metaKey && e.altKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c')) ||
       (e.metaKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c')) ||
-      (e.metaKey && (e.key === 'U' || e.key === 'u')) // Просмотр исходного кода
+      (e.metaKey && (e.key === 'U' || e.key === 'u')) || // Просмотр исходного кода
+      
+      // Дополнительная блокировка Cmd+Option+J для macOS
+      (e.metaKey && e.altKey && (e.key === 'J' || e.key === 'j'))
       
       // Убираем блокировку Escape, Tab, Enter, сохранения и других функций
     ) {
@@ -661,7 +664,7 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
       <video
         ref={videoRef}
         className={cn(
-          'w-full h-full object-cover',
+          'w-full h-full object-contain',
           state.isFullscreen && 'object-contain'
         )}
         poster={poster}
