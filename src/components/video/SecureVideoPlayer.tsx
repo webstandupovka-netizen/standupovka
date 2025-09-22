@@ -135,43 +135,23 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
     return false
   }, [])
 
-  // Защита от горячих клавиш
+  // Мягкая защита от горячих клавиш DevTools
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    // Блокируем все возможные комбинации для открытия DevTools
+    // Блокируем только основные комбинации для открытия DevTools
     if (
       // F12 на всех платформах
       e.key === 'F12' ||
       
       // Windows/Linux комбинации
-      (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C' || e.key === 'K')) ||
+      (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) ||
       (e.ctrlKey && e.key === 'U') || // Просмотр исходного кода
-      (e.ctrlKey && e.key === 'S') || // Сохранение страницы
       
       // macOS комбинации (Cmd = metaKey)
-      (e.metaKey && e.altKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c' || e.key === 'K' || e.key === 'k')) ||
+      (e.metaKey && e.altKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c')) ||
       (e.metaKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c')) ||
-      (e.metaKey && (e.key === 'U' || e.key === 'u')) || // Просмотр исходного кода
-      (e.metaKey && (e.key === 'S' || e.key === 's')) || // Сохранение страницы
+      (e.metaKey && (e.key === 'U' || e.key === 'u')) // Просмотр исходного кода
       
-      // Дополнительные комбинации для разных браузеров
-      (e.ctrlKey && e.shiftKey && e.key === 'Delete') || // Очистка кэша Windows
-      (e.metaKey && e.shiftKey && e.key === 'Delete') || // Очистка кэша macOS
-      (e.ctrlKey && e.shiftKey && e.key === 'R') || // Жесткая перезагрузка Windows
-      (e.metaKey && e.shiftKey && e.key === 'R') || // Жесткая перезагрузка macOS
-      
-      // Альтернативные комбинации для консоли
-      (e.altKey && e.ctrlKey && e.key === 'J') || // Alt+Ctrl+J
-      (e.altKey && e.metaKey && e.key === 'J') || // Alt+Cmd+J для некоторых браузеров
-      
-      // Блокировка Escape (может закрывать модальные окна защиты)
-      e.key === 'Escape' ||
-      
-      // Блокировка Tab (навигация по элементам)
-      e.key === 'Tab' ||
-      
-      // Блокировка Enter в некоторых контекстах
-      (e.ctrlKey && e.key === 'Enter') ||
-      (e.metaKey && e.key === 'Enter')
+      // Убираем блокировку Escape, Tab, Enter, сохранения и других функций
     ) {
       e.preventDefault()
       e.stopPropagation()
@@ -199,13 +179,14 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
           configurable: false
         })
         
-        // Защита от отладки - множественные проверки
+        // Мягкая защита от отладки - только предупреждения
         const checkDevTools = () => {
           const s = performance.now()
           debugger
           const e = performance.now()
           if (e - s > 100) {
-            window.location.href = 'about:blank'
+            console.warn('DevTools обнаружены')
+            // Убираем перенаправление на about:blank
           }
         }
         
@@ -216,20 +197,21 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
             eval('debugger')
             const end = Date.now()
             if (end - start > 100) {
-              window.location.href = 'about:blank'
+              console.warn('DevTools обнаружены через eval')
+              // Убираем перенаправление на about:blank
             }
           } catch (e) {
             // Игнорируем ошибки
           }
         }
         
-        // Проверяем каждые 500ms разными методами
-        setInterval(checkDevTools, 500)
-        setInterval(checkDevToolsEval, 700)
+        // Проверяем каждые 2000ms для снижения нагрузки
+        setInterval(checkDevTools, 2000)
+        setInterval(checkDevToolsEval, 2500)
         
-        // Проверка размера окна с более низким порогом
+        // Мягкая проверка размера окна
         let devtools = {open: false, orientation: null}
-        const threshold = 120 // Снижен порог для более чувствительного обнаружения
+        const threshold = 200 // Увеличен порог для менее агрессивного обнаружения
         let lastOrientation = window.orientation
         
         setInterval(() => {
@@ -243,14 +225,15 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
               window.outerWidth - window.innerWidth > threshold) {
             if (!devtools.open) {
               devtools.open = true
-              window.location.href = 'about:blank'
+              console.warn('Возможно открыты DevTools')
+              // Убираем перенаправление на about:blank
             }
           } else {
             devtools.open = false
           }
-        }, 300)
+        }, 1000) // Увеличиваем интервал
         
-        // Проверка через изменение размера viewport с учетом ориентации
+        // Мягкая проверка изменения размера viewport
         let lastInnerWidth = window.innerWidth
         let lastInnerHeight = window.innerHeight
         
@@ -263,13 +246,14 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
             return
           }
           
-          if (Math.abs(window.innerWidth - lastInnerWidth) > 100 || 
-              Math.abs(window.innerHeight - lastInnerHeight) > 100) {
-            window.location.href = 'about:blank'
+          if (Math.abs(window.innerWidth - lastInnerWidth) > 200 || 
+              Math.abs(window.innerHeight - lastInnerHeight) > 200) {
+            console.warn('Обнаружено значительное изменение размера viewport')
+            // Убираем перенаправление на about:blank
           }
           lastInnerWidth = window.innerWidth
           lastInnerHeight = window.innerHeight
-        }, 400)
+        }, 1500) // Увеличиваем интервал
         
         // Обработка изменения ориентации экрана
         const handleOrientationChange = () => {
@@ -297,16 +281,18 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
           return originalOpen.call(this, url, ...args)
         }
         
-        // Блокировка Firebug
+        // Мягкая проверка Firebug
         if (window.console && (window.console as any).firebug) {
-          window.location.href = 'about:blank'
+          console.warn('Обнаружен Firebug')
+          // Убираем перенаправление на about:blank
         }
         
-        // Проверка на наличие расширений разработчика
+        // Мягкая проверка расширений разработчика
         if (typeof (window as any).devtools !== 'undefined' || 
             typeof (window as any).__REACT_DEVTOOLS_GLOBAL_HOOK__ !== 'undefined' ||
             typeof (window as any).__VUE_DEVTOOLS_GLOBAL_HOOK__ !== 'undefined') {
-          window.location.href = 'about:blank'
+          console.warn('Обнаружены расширения разработчика')
+          // Убираем перенаправление на about:blank
         }
         
       } catch (e) {
