@@ -315,7 +315,7 @@ export default function StreamPage() {
           >
             {/* Video Container */}
             <div className="relative bg-black rounded-xl md:rounded-2xl overflow-hidden border border-[#333333] shadow-2xl">
-              <div className="aspect-video bg-gradient-to-br from-black via-[#111111] to-black" style={{maxHeight: 'min(70vh, 500px)'}}>
+              <div className="aspect-video bg-gradient-to-br from-black via-[#111111] to-black">
                 {canStream ? (
                   // Если стрим активен и есть live URL - показываем live
                   stream.is_live && (stream.castr_playback_url || stream.castr_embed_url) ? (
