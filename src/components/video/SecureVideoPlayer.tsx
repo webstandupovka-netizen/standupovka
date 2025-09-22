@@ -81,6 +81,40 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
     return '1080p'
   }
 
+  // Обфусцированные функции для защиты URL видео
+  const [_0x1a2b, _0x3c4d] = (() => {
+    const _encode = (u: string): string => {
+      try {
+        const e = btoa(u)
+        const o = e.split('').reverse().join('')
+        // Дополнительное XOR шифрование
+        return o.split('').map((c, i) => 
+          String.fromCharCode(c.charCodeAt(0) ^ (i % 7 + 1))
+        ).join('')
+      } catch {
+        return u
+      }
+    }
+    
+    const _decode = (e: string): string => {
+      try {
+        // Обратное XOR дешифрование
+        const xorDecoded = e.split('').map((c, i) => 
+          String.fromCharCode(c.charCodeAt(0) ^ (i % 7 + 1))
+        ).join('')
+        const r = xorDecoded.split('').reverse().join('')
+        return atob(r)
+      } catch {
+        return e
+      }
+    }
+    
+    return [_encode, _decode]
+  })()
+  
+  const encodeVideoUrl = _0x1a2b
+  const decodeVideoUrl = _0x3c4d
+
   const [state, setState] = useState<VideoState>({
     isPlaying: false,
     currentTime: 0,
@@ -95,9 +129,9 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
     availableQualities: ['1080p', '720p', '480p'],
     showControls: true,
     videoSources: {
-      '1080p': 'https://line.mediashowgrup.md/stand_1080.mp4',
-      '720p': 'https://line.mediashowgrup.md/stand_720.mp4',
-      '480p': 'https://line.mediashowgrup.md/stand_480.mp4'
+      '1080p': encodeVideoUrl('https://line.mediashowgrup.md/stand_1080.mp4'),
+      '720p': encodeVideoUrl('https://line.mediashowgrup.md/stand_720.mp4'),
+      '480p': encodeVideoUrl('https://line.mediashowgrup.md/stand_480.mp4')
     }
   })
 
@@ -120,6 +154,45 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
     }
   }, [])
 
+  // Дополнительная защита от DevTools
+  const protectFromDevTools = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const n = () => {}
+        ;['log', 'debug', 'info', 'warn', 'error', 'table', 'trace'].forEach(m => {
+          if (console[m as keyof Console]) {
+            (console as any)[m] = n
+          }
+        })
+        
+        // Защита от отладки
+        const checkDevTools = () => {
+          const s = performance.now()
+          debugger
+          const e = performance.now()
+          if (e - s > 100) {
+            window.location.href = 'about:blank'
+          }
+        }
+        
+        setInterval(checkDevTools, 1000)
+        
+        // Дополнительная защита от копирования URL
+        const originalFetch = window.fetch
+        window.fetch = function(...args) {
+          const url = args[0] as string
+          if (url && url.includes('.mp4')) {
+            console.warn('Доступ к видео заблокирован')
+            return Promise.reject(new Error('Access denied'))
+          }
+          return originalFetch.apply(this, args)
+        }
+      } catch (e) {
+        // Игнорируем ошибки
+      }
+    }
+  }, [])
+
   // Защита от перетаскивания
   const handleDragStart = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -134,7 +207,8 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
     
     const video = videoRef.current
     // Используем источник видео в зависимости от выбранного качества
-    const videoSource = state.videoSources[state.selectedQuality] || src
+    const encodedVideoSource = state.videoSources[state.selectedQuality] || src
+    const videoSource = decodeVideoUrl(encodedVideoSource)
     video.src = videoSource
     video.autoplay = autoplay
     video.muted = muted
@@ -160,7 +234,30 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
       setState(prev => ({ ...prev, error: errorMsg, isLoading: false }))
       onError?.(new Error(errorMsg))
     })
-  }, [src, autoplay, muted, loop, poster, onError, state.selectedQuality, state.videoSources])
+
+    // Дополнительная защита - скрытие src от инспектора элементов
+    try {
+      Object.defineProperty(video, 'src', {
+        get: function() {
+          return '[PROTECTED]'
+        },
+        set: function(value) {
+          // Сохраняем оригинальное поведение
+          Object.defineProperty(this, '_realSrc', {
+            value: value,
+            writable: true,
+            configurable: true
+          })
+          // Устанавливаем реальный src через внутренний механизм
+          HTMLVideoElement.prototype.setAttribute.call(this, 'src', value)
+        },
+        configurable: true
+      })
+    } catch (e) {
+      // Если переопределение не удалось, продолжаем без защиты
+      console.warn('Не удалось применить дополнительную защиту URL')
+    }
+  }, [src, autoplay, muted, loop, poster, onError, state.selectedQuality, state.videoSources, decodeVideoUrl])
 
   // Обработчики событий для HTML5 видео
   useEffect(() => {
@@ -222,6 +319,9 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
     // Добавляем глобальные обработчики для защиты
     document.addEventListener('keydown', handleKeyDown)
     
+    // Активируем защиту от DevTools
+    protectFromDevTools()
+    
     return () => {
       document.removeEventListener('keydown', handleKeyDown)
       // Очищаем таймер при размонтировании
@@ -229,7 +329,7 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
         clearTimeout(hideControlsTimeoutRef.current)
       }
     }
-  }, [initVideoPlayer, handleKeyDown])
+  }, [initVideoPlayer, handleKeyDown, protectFromDevTools])
 
   // Управление воспроизведением
   const togglePlay = async () => {
