@@ -70,6 +70,7 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
   const containerRef = useRef<HTMLDivElement>(null)
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const hideControlsTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   
   // Определение устройства для выбора качества по умолчанию
   const getDefaultQuality = () => {
@@ -223,6 +224,10 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
     
     return () => {
       document.removeEventListener('keydown', handleKeyDown)
+      // Очищаем таймер при размонтировании
+      if (hideControlsTimeoutRef.current) {
+        clearTimeout(hideControlsTimeoutRef.current)
+      }
     }
   }, [initVideoPlayer, handleKeyDown])
 
@@ -307,13 +312,35 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
   }
 
   // Gestionarea mouse-ului pentru ascunderea controalelor
-  const handleMouseEnter = () => {
+  const showControlsTemporarily = useCallback(() => {
     setState(prev => ({ ...prev, showControls: true }))
-  }
+    
+    // Очищаем предыдущий таймер
+    if (hideControlsTimeoutRef.current) {
+      clearTimeout(hideControlsTimeoutRef.current)
+    }
+    
+    // Устанавливаем новый таймер для скрытия контролов через 3 секунды
+    hideControlsTimeoutRef.current = setTimeout(() => {
+      setState(prev => ({ ...prev, showControls: false }))
+    }, 3000)
+  }, [])
 
-  const handleMouseLeave = () => {
+  const handleMouseMove = useCallback(() => {
+    showControlsTemporarily()
+  }, [showControlsTemporarily])
+
+  const handleMouseEnter = useCallback(() => {
+    showControlsTemporarily()
+  }, [showControlsTemporarily])
+
+  const handleMouseLeave = useCallback(() => {
+    // Очищаем таймер при уходе мыши
+    if (hideControlsTimeoutRef.current) {
+      clearTimeout(hideControlsTimeoutRef.current)
+    }
     setState(prev => ({ ...prev, showControls: false }))
-  }
+  }, [])
 
   // Formatarea timpului
   const formatTime = (seconds: number): string => {
@@ -360,6 +387,7 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
       onDragStart={handleDragStart}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      onMouseMove={handleMouseMove}
     >
       {/* Водяной знак с информацией о пользователе */}
       {userEmail && (
