@@ -85,12 +85,9 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
   const [_0x1a2b, _0x3c4d] = (() => {
     const _encode = (u: string): string => {
       try {
+        // Простое base64 кодирование с реверсом
         const e = btoa(u)
-        const o = e.split('').reverse().join('')
-        // Дополнительное XOR шифрование
-        return o.split('').map((c, i) => 
-          String.fromCharCode(c.charCodeAt(0) ^ (i % 7 + 1))
-        ).join('')
+        return e.split('').reverse().join('')
       } catch {
         return u
       }
@@ -98,11 +95,8 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
     
     const _decode = (e: string): string => {
       try {
-        // Обратное XOR дешифрование
-        const xorDecoded = e.split('').map((c, i) => 
-          String.fromCharCode(c.charCodeAt(0) ^ (i % 7 + 1))
-        ).join('')
-        const r = xorDecoded.split('').reverse().join('')
+        // Обратное декодирование
+        const r = e.split('').reverse().join('')
         return atob(r)
       } catch {
         return e
@@ -129,9 +123,9 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
     availableQualities: ['1080p', '720p', '480p'],
     showControls: true,
     videoSources: {
-      '1080p': encodeVideoUrl('https://line.mediashowgrup.md/stand_1080.mp4'),
-      '720p': encodeVideoUrl('https://line.mediashowgrup.md/stand_720.mp4'),
-      '480p': encodeVideoUrl('https://line.mediashowgrup.md/stand_480.mp4')
+      '1080p': 'https://line.mediashowgrup.md/stand_1080.mp4',
+      '720p': 'https://line.mediashowgrup.md/stand_720.mp4',
+      '480p': 'https://line.mediashowgrup.md/stand_480.mp4'
     }
   })
 
@@ -154,39 +148,39 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
     }
   }, [])
 
-  // Дополнительная защита от DevTools
+  // Дополнительная защита от DevTools (временно отключено)
   const protectFromDevTools = useCallback(() => {
     if (typeof window !== 'undefined') {
       try {
-        const n = () => {}
-        ;['log', 'debug', 'info', 'warn', 'error', 'table', 'trace'].forEach(m => {
-          if (console[m as keyof Console]) {
-            (console as any)[m] = n
-          }
-        })
+        // Временно отключаем блокировку консоли
+        // const n = () => {}
+        // ;['log', 'debug', 'info', 'warn', 'error', 'table', 'trace'].forEach(m => {
+        //   if (console[m as keyof Console]) {
+        //     (console as any)[m] = n
+        //   }
+        // })
         
-        // Защита от отладки
-        const checkDevTools = () => {
-          const s = performance.now()
-          debugger
-          const e = performance.now()
-          if (e - s > 100) {
-            window.location.href = 'about:blank'
-          }
-        }
+        // Защита от отладки (временно отключено)
+        // const checkDevTools = () => {
+        //   const s = performance.now()
+        //   debugger
+        //   const e = performance.now()
+        //   if (e - s > 100) {
+        //     window.location.href = 'about:blank'
+        //   }
+        // }
         
-        setInterval(checkDevTools, 1000)
+        // setInterval(checkDevTools, 1000)
         
-        // Дополнительная защита от копирования URL
-        const originalFetch = window.fetch
-        window.fetch = function(...args) {
-          const url = args[0] as string
-          if (url && url.includes('.mp4')) {
-            console.warn('Доступ к видео заблокирован')
-            return Promise.reject(new Error('Access denied'))
-          }
-          return originalFetch.apply(this, args)
-        }
+        // Защита от прямого доступа к URL (но не блокируем видеоплеер)
+         const originalOpen = window.open
+         window.open = function(url, ...args) {
+           if (url && typeof url === 'string' && url.includes('.mp4')) {
+             console.warn('Прямой доступ к видео заблокирован')
+             return null
+           }
+           return originalOpen.call(this, url, ...args)
+         }
       } catch (e) {
         // Игнорируем ошибки
       }
@@ -207,8 +201,7 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
     
     const video = videoRef.current
     // Используем источник видео в зависимости от выбранного качества
-    const encodedVideoSource = state.videoSources[state.selectedQuality] || src
-    const videoSource = decodeVideoUrl(encodedVideoSource)
+    const videoSource = state.videoSources[state.selectedQuality] || src
     video.src = videoSource
     video.autoplay = autoplay
     video.muted = muted
@@ -235,29 +228,29 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
       onError?.(new Error(errorMsg))
     })
 
-    // Дополнительная защита - скрытие src от инспектора элементов
-    try {
-      Object.defineProperty(video, 'src', {
-        get: function() {
-          return '[PROTECTED]'
-        },
-        set: function(value) {
-          // Сохраняем оригинальное поведение
-          Object.defineProperty(this, '_realSrc', {
-            value: value,
-            writable: true,
-            configurable: true
-          })
-          // Устанавливаем реальный src через внутренний механизм
-          HTMLVideoElement.prototype.setAttribute.call(this, 'src', value)
-        },
-        configurable: true
-      })
-    } catch (e) {
-      // Если переопределение не удалось, продолжаем без защиты
-      console.warn('Не удалось применить дополнительную защиту URL')
-    }
-  }, [src, autoplay, muted, loop, poster, onError, state.selectedQuality, state.videoSources, decodeVideoUrl])
+    // Дополнительная защита - скрытие src от инспектора элементов (временно отключено)
+    // try {
+    //   Object.defineProperty(video, 'src', {
+    //     get: function() {
+    //       return '[PROTECTED]'
+    //     },
+    //     set: function(value) {
+    //       // Сохраняем оригинальное поведение
+    //       Object.defineProperty(this, '_realSrc', {
+    //         value: value,
+    //         writable: true,
+    //         configurable: true
+    //       })
+    //       // Устанавливаем реальный src через внутренний механизм
+    //       HTMLVideoElement.prototype.setAttribute.call(this, 'src', value)
+    //     },
+    //     configurable: true
+    //   })
+    // } catch (e) {
+    //   // Если переопределение не удалось, продолжаем без защиты
+    //   console.warn('Не удалось применить дополнительную защиту URL')
+    // }
+  }, [src, autoplay, muted, loop, poster, onError, state.selectedQuality, state.videoSources])
 
   // Обработчики событий для HTML5 видео
   useEffect(() => {
