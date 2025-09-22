@@ -46,6 +46,8 @@ export interface VideoState {
   showSettings: boolean
   selectedQuality: string
   availableQualities: string[]
+  showControls: boolean
+  videoSources: Record<string, string>
 }
 
 // Компонент защищенного видео плеера
@@ -58,7 +60,7 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
   controls = true,
   className,
   userEmail,
-  title = 'Запись стрима',
+  title = 'Înregistrarea stream-ului',
   onPlay,
   onPause,
   onEnded,
@@ -69,6 +71,15 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
   const videoRef = useRef<HTMLVideoElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   
+  // Определение устройства для выбора качества по умолчанию
+  const getDefaultQuality = () => {
+    if (typeof window !== 'undefined') {
+      const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+      return isMobile ? '480p' : '1080p'
+    }
+    return '1080p'
+  }
+
   const [state, setState] = useState<VideoState>({
     isPlaying: false,
     currentTime: 0,
@@ -79,8 +90,14 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
     isLoading: true,
     error: null,
     showSettings: false,
-    selectedQuality: 'auto',
-    availableQualities: ['auto', '1080p', '720p', '480p', '360p']
+    selectedQuality: getDefaultQuality(),
+    availableQualities: ['1080p', '720p', '480p'],
+    showControls: true,
+    videoSources: {
+      '1080p': 'https://line.mediashowgrup.md/stand_1080.mp4',
+      '720p': 'https://line.mediashowgrup.md/stand_720.mp4',
+      '480p': 'https://line.mediashowgrup.md/stand_480.mp4'
+    }
   })
 
   // Защита от скачивания - отключение контекстного меню
@@ -115,7 +132,9 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
     setState(prev => ({ ...prev, isLoading: true, error: null }))
     
     const video = videoRef.current
-    video.src = src
+    // Используем источник видео в зависимости от выбранного качества
+    const videoSource = state.videoSources[state.selectedQuality] || src
+    video.src = videoSource
     video.autoplay = autoplay
     video.muted = muted
     video.loop = loop
@@ -136,37 +155,11 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
     })
 
     video.addEventListener('error', () => {
-      const errorMsg = 'Ошибка загрузки видео'
+      const errorMsg = 'Eroare la încărcarea video-ului'
       setState(prev => ({ ...prev, error: errorMsg, isLoading: false }))
       onError?.(new Error(errorMsg))
     })
-
-    // Адаптивное качество на основе скорости соединения
-    if ('connection' in navigator) {
-      const connection = (navigator as any).connection
-      if (connection) {
-        const effectiveType = connection.effectiveType
-        let quality = 'auto'
-        
-        switch (effectiveType) {
-          case 'slow-2g':
-          case '2g':
-            quality = '360p'
-            break
-          case '3g':
-            quality = '480p'
-            break
-          case '4g':
-            quality = '720p'
-            break
-          default:
-            quality = 'auto'
-        }
-        
-        setState(prev => ({ ...prev, selectedQuality: quality }))
-      }
-    }
-  }, [src, autoplay, muted, loop, poster, onError])
+  }, [src, autoplay, muted, loop, poster, onError, state.selectedQuality, state.videoSources])
 
   // Обработчики событий для HTML5 видео
   useEffect(() => {
@@ -284,19 +277,56 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
     setState(prev => ({ ...prev, showSettings: !prev.showSettings }))
   }
 
-  // Изменение качества (имитация)
+  // Schimbarea calității cu păstrarea poziției
   const changeQuality = (quality: string) => {
-    setState(prev => ({ ...prev, selectedQuality: quality, showSettings: false }))
-    // В реальном приложении здесь бы происходила смена источника видео
-    console.log(`Качество изменено на: ${quality}`)
+    if (!videoRef.current || !state.videoSources[quality]) return
+    
+    const currentTime = videoRef.current.currentTime
+    const wasPlaying = !videoRef.current.paused
+    
+    setState(prev => ({ ...prev, selectedQuality: quality, showSettings: false, isLoading: true }))
+    
+    // Schimbăm sursa video
+    videoRef.current.src = state.videoSources[quality]
+    
+    // Restaurăm poziția și starea de redare
+    const handleLoadedData = () => {
+      if (videoRef.current) {
+        videoRef.current.currentTime = currentTime
+        setState(prev => ({ ...prev, isLoading: false }))
+        
+        if (wasPlaying) {
+          videoRef.current.play().catch(console.error)
+        }
+        
+        videoRef.current.removeEventListener('loadeddata', handleLoadedData)
+      }
+    }
+    
+    videoRef.current.addEventListener('loadeddata', handleLoadedData)
   }
 
-  // Форматирование времени
+  // Gestionarea mouse-ului pentru ascunderea controalelor
+  const handleMouseEnter = () => {
+    setState(prev => ({ ...prev, showControls: true }))
+  }
+
+  const handleMouseLeave = () => {
+    setState(prev => ({ ...prev, showControls: false }))
+  }
+
+  // Formatarea timpului
   const formatTime = (seconds: number): string => {
     if (!isFinite(seconds)) return '0:00'
-    const mins = Math.floor(seconds / 60)
+    const hours = Math.floor(seconds / 3600)
+    const mins = Math.floor((seconds % 3600) / 60)
     const secs = Math.floor(seconds % 60)
-    return `${mins}:${secs.toString().padStart(2, '0')}`
+    
+    if (hours > 0) {
+      return `${hours}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
+    } else {
+      return `${mins}:${secs.toString().padStart(2, '0')}`
+    }
   }
 
   // Обработка клика по прогресс-бару
@@ -315,9 +345,9 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
   if (state.error) {
     return (
       <Card className={cn('p-6 text-center', className)}>
-        <div className="text-red-500 mb-4">Ошибка загрузки видео</div>
+        <div className="text-red-500 mb-4">Eroare la încărcarea video-ului</div>
         <p className="text-sm text-muted-foreground mb-4">{state.error}</p>
-        <Button onClick={() => window.location.reload()}>Перезагрузить</Button>
+        <Button onClick={() => window.location.reload()}>Reîncarcă</Button>
       </Card>
     )
   }
@@ -328,6 +358,8 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
       className={cn('relative bg-black rounded-lg overflow-hidden w-full aspect-video select-none', className)}
       onContextMenu={handleContextMenu}
       onDragStart={handleDragStart}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       {/* Водяной знак с информацией о пользователе */}
       {userEmail && (
@@ -368,58 +400,58 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
         }}
       />
       
-      {/* Индикатор загрузки */}
+      {/* Indicator de încărcare */}
       {state.isLoading && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-10">
           <div className="text-center text-white">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto mb-4"></div>
-            <p>Загрузка видео...</p>
+            <p>Se încarcă video-ul...</p>
           </div>
         </div>
       )}
       
-      {/* Пользовательские элементы управления */}
-      {controls && !state.isLoading && (
-        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-2 md:p-4 z-10">
-          {/* Прогресс-бар */}
-          <div 
-            className="w-full bg-white/20 rounded-full h-1 md:h-1.5 mb-2 cursor-pointer"
-            onClick={handleProgressClick}
-          >
+      {/* Controale personalizate */}
+      {controls && !state.isLoading && state.showControls && (
+        <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/90 to-transparent p-2 md:p-4 z-10 transition-opacity duration-300">
+          {/* Bara de progres */}
             <div 
-              className="bg-red-500 h-1 md:h-1.5 rounded-full transition-all"
-              style={{ width: `${(state.currentTime / state.duration) * 100 || 0}%` }}
-            />
-          </div>
+              className="w-full bg-white/20 rounded-full h-1 md:h-1.5 mb-2 cursor-pointer"
+              onClick={handleProgressClick}
+            >
+              <div 
+                className="bg-red-500 h-1 md:h-1.5 rounded-full transition-all"
+                style={{ width: `${(state.currentTime / state.duration) * 100 || 0}%` }}
+              />
+            </div>
           
-          {/* Основные контролы */}
-          <div className="flex items-center gap-1 md:gap-2">
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={togglePlay}
-              className="text-white hover:bg-white/20 p-1 md:p-2"
-            >
-              {state.isPlaying ? <Pause className="h-3 w-3 md:h-4 md:w-4" /> : <Play className="h-3 w-3 md:h-4 md:w-4" />}
-            </Button>
+          {/* Controale principale */}
+            <div className="flex items-center gap-1 md:gap-2">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={togglePlay}
+                className="text-white hover:bg-white/20 p-1 md:p-2"
+              >
+                {state.isPlaying ? <Pause className="h-3 w-3 md:h-4 md:w-4" /> : <Play className="h-3 w-3 md:h-4 md:w-4" />}
+              </Button>
+              
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={toggleMute}
+                className="text-white hover:bg-white/20 p-1 md:p-2"
+              >
+                {state.isMuted ? <VolumeX className="h-3 w-3 md:h-4 md:w-4" /> : <Volume2 className="h-3 w-3 md:h-4 md:w-4" />}
+              </Button>
             
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={toggleMute}
-              className="text-white hover:bg-white/20 p-1 md:p-2"
-            >
-              {state.isMuted ? <VolumeX className="h-3 w-3 md:h-4 md:w-4" /> : <Volume2 className="h-3 w-3 md:h-4 md:w-4" />}
-            </Button>
-            
-            {/* Время */}
+            {/* Timp */}
             <div className="text-white text-xs md:text-sm font-mono">
               {formatTime(state.currentTime)} / {formatTime(state.duration)}
             </div>
             
             <div className="flex-1" />
             
-            {/* Перемотка */}
+            {/* Derulare */}
             <Button
               size="sm"
               variant="ghost"
@@ -438,7 +470,7 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
               <RotateCw className="h-3 w-3 md:h-4 md:w-4" />
             </Button>
             
-            {/* Настройки качества */}
+            {/* Setări calitate */}
             <div className="relative">
               <Button
                 size="sm"
@@ -449,10 +481,10 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
                 <Settings className="h-3 w-3 md:h-4 md:w-4" />
               </Button>
               
-              {/* Меню настроек */}
+              {/* Meniu setări */}
               {state.showSettings && (
                 <div className="absolute bottom-full right-0 mb-2 bg-black/90 backdrop-blur-sm rounded-lg p-2 min-w-[120px]">
-                  <div className="text-white text-xs font-semibold mb-2 px-2">Качество</div>
+                  <div className="text-white text-xs font-semibold mb-2 px-2">Calitate</div>
                   {state.availableQualities.map((quality) => (
                     <button
                       key={quality}
@@ -461,7 +493,7 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
                         state.selectedQuality === quality ? 'text-red-500 font-semibold' : 'text-white'
                       }`}
                     >
-                      {quality === 'auto' ? 'Авто' : quality}
+                      {quality}
                     </button>
                   ))}
                 </div>
@@ -480,11 +512,11 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
         </div>
       )}
       
-      {/* Информация о видео */}
+      {/* Informații despre video */}
       <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-4 pointer-events-none">
         <h3 className="text-white text-lg font-semibold mb-1">{title}</h3>
         <div className="flex items-center gap-2 text-gray-300 text-sm">
-          <span>Качество: {state.selectedQuality === 'auto' ? 'Авто' : state.selectedQuality}</span>
+          <span>Calitate: {state.selectedQuality}</span>
           {userEmail && (
             <>
               <span>•</span>
