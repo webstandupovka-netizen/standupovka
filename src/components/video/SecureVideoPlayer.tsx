@@ -137,50 +137,78 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
 
   // Защита от горячих клавиш
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
-    // Блокируем Ctrl+S, Ctrl+Shift+I, F12, Ctrl+U и другие
+    // Блокируем различные комбинации для открытия DevTools
     if (
+      // Windows/Linux: Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C, F12
+      (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) ||
+      // macOS: Cmd+Option+I, Cmd+Option+J, Cmd+Option+C
+      (e.metaKey && e.altKey && (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c')) ||
+      // F12 на всех платформах
+      e.key === 'F12' ||
+      // Блокируем сохранение и просмотр исходного кода
       (e.ctrlKey && (e.key === 's' || e.key === 'u')) ||
-      (e.ctrlKey && e.shiftKey && e.key === 'I') ||
-      e.key === 'F12'
+      (e.metaKey && (e.key === 's' || e.key === 'u')) ||
+      // Дополнительные комбинации
+      (e.ctrlKey && e.shiftKey && e.key === 'Delete') || // Очистка кэша
+      (e.metaKey && e.shiftKey && e.key === 'Delete')
     ) {
       e.preventDefault()
+      e.stopPropagation()
       return false
     }
   }, [])
 
-  // Дополнительная защита от DevTools (временно отключено)
+  // Дополнительная защита от DevTools
   const protectFromDevTools = useCallback(() => {
     if (typeof window !== 'undefined') {
       try {
-        // Временно отключаем блокировку консоли
-        // const n = () => {}
-        // ;['log', 'debug', 'info', 'warn', 'error', 'table', 'trace'].forEach(m => {
-        //   if (console[m as keyof Console]) {
-        //     (console as any)[m] = n
-        //   }
-        // })
+        // Блокировка консоли
+        const n = () => {}
+        ;['log', 'debug', 'info', 'warn', 'error', 'table', 'trace'].forEach(m => {
+          if (console[m as keyof Console]) {
+            (console as any)[m] = n
+          }
+        })
         
-        // Защита от отладки (временно отключено)
-        // const checkDevTools = () => {
-        //   const s = performance.now()
-        //   debugger
-        //   const e = performance.now()
-        //   if (e - s > 100) {
-        //     window.location.href = 'about:blank'
-        //   }
-        // }
+        // Защита от отладки
+        const checkDevTools = () => {
+          const s = performance.now()
+          debugger
+          const e = performance.now()
+          if (e - s > 100) {
+            // Перенаправляем на пустую страницу при обнаружении DevTools
+            window.location.href = 'about:blank'
+          }
+        }
         
-        // setInterval(checkDevTools, 1000)
+        // Проверяем каждую секунду
+        setInterval(checkDevTools, 1000)
         
-        // Защита от прямого доступа к URL (но не блокируем видеоплеер)
-         const originalOpen = window.open
-         window.open = function(url, ...args) {
-           if (url && typeof url === 'string' && url.includes('.mp4')) {
-             console.warn('Прямой доступ к видео заблокирован')
-             return null
-           }
-           return originalOpen.call(this, url, ...args)
-         }
+        // Дополнительная проверка размера окна (DevTools изменяют размер)
+        let devtools = {open: false, orientation: null}
+        const threshold = 160
+        
+        setInterval(() => {
+          if (window.outerHeight - window.innerHeight > threshold || 
+              window.outerWidth - window.innerWidth > threshold) {
+            if (!devtools.open) {
+              devtools.open = true
+              window.location.href = 'about:blank'
+            }
+          } else {
+            devtools.open = false
+          }
+        }, 500)
+        
+        // Защита от прямого доступа к URL
+        const originalOpen = window.open
+        window.open = function(url, ...args) {
+          if (url && typeof url === 'string' && url.includes('.mp4')) {
+            console.warn('Прямой доступ к видео заблокирован')
+            return null
+          }
+          return originalOpen.call(this, url, ...args)
+        }
       } catch (e) {
         // Игнорируем ошибки
       }
@@ -305,24 +333,32 @@ export const SecureVideoPlayer: React.FC<SecureVideoPlayerProps> = ({
     }
   }, [onPlay, onPause, onEnded, onTimeUpdate])
 
+  // Глобальная защита от контекстного меню
+  const handleGlobalContextMenu = useCallback((e: Event) => {
+    e.preventDefault()
+    return false
+  }, [])
+
   // Инициализация плеера
   useEffect(() => {
     initVideoPlayer()
     
     // Добавляем глобальные обработчики для защиты
     document.addEventListener('keydown', handleKeyDown)
+    document.addEventListener('contextmenu', handleGlobalContextMenu)
     
     // Активируем защиту от DevTools
     protectFromDevTools()
     
     return () => {
       document.removeEventListener('keydown', handleKeyDown)
+      document.removeEventListener('contextmenu', handleGlobalContextMenu)
       // Очищаем таймер при размонтировании
       if (hideControlsTimeoutRef.current) {
         clearTimeout(hideControlsTimeoutRef.current)
       }
     }
-  }, [initVideoPlayer, handleKeyDown, protectFromDevTools])
+  }, [initVideoPlayer, handleKeyDown, protectFromDevTools, handleGlobalContextMenu])
 
   // Управление воспроизведением
   const togglePlay = async () => {
