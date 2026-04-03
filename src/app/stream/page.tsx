@@ -339,7 +339,11 @@ export default function StreamPage() {
                     <StreamPlayer
                       streamId={stream.id}
                       isLive
-                      liveEmbedUrl={stream.castr_playback_url || stream.castr_embed_url}
+                      liveEmbedUrl={
+                        stream.cf_input_id
+                          ? `https://customer-gc9y1z1xc4r91efd.cloudflarestream.com/${stream.cf_input_id}/iframe`
+                          : stream.castr_playback_url || stream.castr_embed_url
+                      }
                       poster={stream.poster_url}
                       className="w-full h-full rounded-2xl"
                     />
