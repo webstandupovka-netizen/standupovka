@@ -8,6 +8,7 @@ interface StreamCardProps {
     title: string
     description?: string
     poster_url?: string
+    poster_card_url?: string
     stream_start_time: string
     price: number
     currency: string
@@ -39,10 +40,10 @@ export function StreamCard({ stream, accessStatus }: StreamCardProps) {
       <div className="group relative rounded-xl overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.03] hover:shadow-2xl hover:shadow-black/50">
         {/* Poster */}
         <div className="aspect-[3/4] relative bg-gray-900">
-          {stream.poster_url ? (
+          {(stream.poster_card_url || stream.poster_url) ? (
             /* eslint-disable-next-line @next/next/no-img-element */
             <img
-              src={stream.poster_url}
+              src={stream.poster_card_url || stream.poster_url || ''}
               alt={stream.title}
               className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
             />

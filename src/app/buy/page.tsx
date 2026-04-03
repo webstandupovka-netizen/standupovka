@@ -19,6 +19,7 @@ interface StreamData {
   stream_start_time: string
   stream_end_time?: string
   poster_url?: string
+  poster_square_url?: string
   is_live: boolean
   is_active: boolean
 }
@@ -231,13 +232,13 @@ function BuyPageInner() {
           transition={{ duration: 0.5 }}
           className="flex flex-col md:flex-row gap-0 bg-white rounded-2xl shadow-2xl shadow-black/30 overflow-hidden"
         >
-          {/* Left — Poster + event info */}
+          {/* Left — Square poster + event info */}
           <div className="relative md:w-[340px] flex-shrink-0">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={stream.poster_url || '/event_poster.jpg'}
+              src={stream.poster_square_url || stream.poster_url || '/event_poster.jpg'}
               alt={stream.title}
-              className="w-full h-48 md:h-full object-cover"
+              className="w-full aspect-square md:h-full object-cover"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent md:bg-gradient-to-r md:from-transparent md:via-transparent md:to-black/10" />
             <div className="absolute bottom-0 left-0 right-0 p-5 md:p-6">

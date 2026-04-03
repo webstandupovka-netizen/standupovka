@@ -69,6 +69,8 @@ export async function PATCH(
       'title',
       'description',
       'poster_url',
+      'poster_square_url',
+      'poster_card_url',
       'stream_start_time',
       'stream_end_time',
       'is_live',

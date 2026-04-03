@@ -37,6 +37,8 @@ export function EventEditor({ streamId, onBack }: EventEditorProps) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [posterUrl, setPosterUrl] = useState('')
+  const [posterSquareUrl, setPosterSquareUrl] = useState('')
+  const [posterCardUrl, setPosterCardUrl] = useState('')
   const [startDate, setStartDate] = useState('')
   const [startTime, setStartTime] = useState('')
   const [price, setPrice] = useState('')
@@ -63,6 +65,8 @@ export function EventEditor({ streamId, onBack }: EventEditorProps) {
       setTitle(data.title || '')
       setDescription(data.description || '')
       setPosterUrl(data.poster_url || '')
+      setPosterSquareUrl(data.poster_square_url || '')
+      setPosterCardUrl(data.poster_card_url || '')
       setPrice(String(data.price || 300))
       setCurrency(data.currency || 'MDL')
       setIsLive(data.is_live || false)
@@ -101,6 +105,8 @@ export function EventEditor({ streamId, onBack }: EventEditorProps) {
           title,
           description,
           poster_url: posterUrl || null,
+          poster_square_url: posterSquareUrl || null,
+          poster_card_url: posterCardUrl || null,
           stream_start_time: streamStartTime,
           price: parseFloat(price),
           currency,
@@ -257,45 +263,43 @@ export function EventEditor({ streamId, onBack }: EventEditorProps) {
         </div>
       </div>
 
-      {/* Постер */}
-      <div className="bg-gray-900 rounded-lg p-6 space-y-4">
-        <h3 className="text-white font-semibold text-lg border-b border-gray-800 pb-3">Постер</h3>
+      {/* Постеры */}
+      <div className="bg-gray-900 rounded-lg p-6 space-y-6">
+        <h3 className="text-white font-semibold text-lg border-b border-gray-800 pb-3">Постеры</h3>
 
-        <div className="flex gap-6">
-          {/* Preview */}
-          <div className="w-32 h-32 bg-gray-800 rounded-lg overflow-hidden flex-shrink-0">
-            {posterUrl ? (
-              <img src={posterUrl} alt="Poster" className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-gray-600 text-sm">Нет постера</div>
-            )}
-          </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Hero — wide */}
+          <PosterUpload
+            label="Hero (широкий)"
+            hint="Фон главной страницы, 16:9"
+            value={posterUrl}
+            onChange={setPosterUrl}
+            onUpload={uploadPoster}
+            uploading={uploadingPoster}
+            previewClass="aspect-video"
+          />
 
-          <div className="flex-1 space-y-3">
-            <div>
-              <label className="text-sm text-gray-400 block mb-1">Загрузить изображение</label>
-              <input
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                onChange={(e) => {
-                  const file = e.target.files?.[0]
-                  if (file) uploadPoster(file)
-                }}
-                className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:bg-blue-600 file:text-white file:text-sm file:cursor-pointer"
-              />
-              {uploadingPoster && <p className="text-blue-400 text-sm mt-1">Загрузка...</p>}
-            </div>
+          {/* Buy — square */}
+          <PosterUpload
+            label="Покупка (квадрат)"
+            hint="Страница оплаты, 1:1"
+            value={posterSquareUrl}
+            onChange={setPosterSquareUrl}
+            onUpload={uploadPoster}
+            uploading={uploadingPoster}
+            previewClass="aspect-square"
+          />
 
-            <div>
-              <label className="text-sm text-gray-400 block mb-1">Или URL</label>
-              <input
-                value={posterUrl}
-                onChange={(e) => setPosterUrl(e.target.value)}
-                placeholder="https://..."
-                className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-600 focus:outline-none focus:border-blue-500"
-              />
-            </div>
-          </div>
+          {/* Card — vertical */}
+          <PosterUpload
+            label="Карточка (вертик.)"
+            hint="Архив записей, 3:4"
+            value={posterCardUrl}
+            onChange={setPosterCardUrl}
+            onUpload={uploadPoster}
+            uploading={uploadingPoster}
+            previewClass="aspect-[3/4]"
+          />
         </div>
       </div>
 
@@ -389,6 +393,53 @@ export function EventEditor({ streamId, onBack }: EventEditorProps) {
           {saving ? 'Сохранение...' : saved ? 'Сохранено!' : 'Сохранить изменения'}
         </button>
       </div>
+    </div>
+  )
+}
+
+// Reusable poster upload component
+function PosterUpload({
+  label, hint, value, onChange, onUpload, uploading, previewClass
+}: {
+  label: string
+  hint: string
+  value: string
+  onChange: (v: string) => void
+  onUpload: (file: File) => Promise<void>
+  uploading: boolean
+  previewClass: string
+}) {
+  return (
+    <div className="space-y-2">
+      <p className="text-white text-sm font-medium">{label}</p>
+      <p className="text-gray-500 text-xs">{hint}</p>
+
+      <div className={`${previewClass} bg-gray-800 rounded-lg overflow-hidden w-full`}>
+        {value ? (
+          <img src={value} alt={label} className="w-full h-full object-cover" />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-gray-600 text-xs">Нет фото</div>
+        )}
+      </div>
+
+      <input
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        onChange={async (e) => {
+          const file = e.target.files?.[0]
+          if (!file) return
+          // Upload and set this specific field
+          const res = await fetch('/api/admin/upload-poster', {
+            method: 'POST',
+            headers: { 'Content-Type': file.type, 'X-Filename': file.name },
+            body: file,
+            credentials: 'include'
+          })
+          const data = await res.json()
+          if (data.url) onChange(data.url)
+        }}
+        className="w-full text-xs px-2 py-1 bg-gray-800 border border-gray-700 rounded-lg text-white file:mr-2 file:py-0.5 file:px-2 file:rounded file:border-0 file:bg-blue-600 file:text-white file:text-xs file:cursor-pointer"
+      />
     </div>
   )
 }

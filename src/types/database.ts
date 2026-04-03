@@ -89,6 +89,8 @@ export interface StreamSettings {
   castr_stream_key?: string
   castr_playback_url?: string
   poster_url?: string
+  poster_square_url?: string
+  poster_card_url?: string
   recorded_video_url?: string
   cf_input_id?: string
   cf_video_id?: string
