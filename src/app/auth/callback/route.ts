@@ -11,12 +11,10 @@ export async function GET(request: NextRequest) {
   const errorDescription = searchParams.get('error_description')
   const rawRedirect = searchParams.get('redirect') ?? '/'
   const next = rawRedirect.startsWith('/') && !rawRedirect.startsWith('//') ? rawRedirect : '/'
-
-  // Также проверяем access_token (некоторые email-клиенты передают через query)
   const accessToken = searchParams.get('access_token')
   const refreshToken = searchParams.get('refresh_token')
 
-  // Обработка ошибок — но только если нет токенов
+  // Обработка ошибок — только если нет токенов
   if (error && !code && !token_hash && !accessToken) {
     let errorMessage = 'auth_callback_error'
     if (errorCode === 'otp_expired' || errorDescription?.includes('expired')) {
@@ -30,13 +28,13 @@ export async function GET(request: NextRequest) {
   const supabase = await createSupabaseServerClient()
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || origin
 
-  // Flow 1: PKCE — обмен кода на сессию
+  // Flow 1: PKCE
   if (code) {
     try {
       const { data, error: authError } = await supabase.auth.exchangeCodeForSession(code)
       if (!authError && data.user) {
         await ensureProfile(supabase, data.user)
-        return NextResponse.redirect(`${appUrl}${next}`)
+        return createAuthRedirect(`${appUrl}${next}`)
       }
       const msg = authError?.message?.includes('expired') ? 'otp_expired' : 'auth_callback_error'
       return NextResponse.redirect(`${origin}/auth/login?error=${msg}`)
@@ -45,7 +43,7 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Flow 2: Token hash (magic link через admin.generateLink)
+  // Flow 2: Token hash (magic link)
   if (token_hash && type) {
     try {
       const { data, error: authError } = await supabase.auth.verifyOtp({
@@ -54,7 +52,7 @@ export async function GET(request: NextRequest) {
       })
       if (!authError && data.user) {
         await ensureProfile(supabase, data.user)
-        return NextResponse.redirect(`${appUrl}${next}`)
+        return createAuthRedirect(`${appUrl}${next}`)
       }
       const msg = authError?.message?.includes('expired') ? 'otp_expired' : 'auth_callback_error'
       return NextResponse.redirect(`${origin}/auth/login?error=${msg}`)
@@ -63,7 +61,7 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Flow 3: Access token (fallback — некоторые email-клиенты)
+  // Flow 3: Access token (fallback)
   if (accessToken) {
     try {
       const { data, error: authError } = await supabase.auth.setSession({
@@ -72,17 +70,34 @@ export async function GET(request: NextRequest) {
       })
       if (!authError && data.user) {
         await ensureProfile(supabase, data.user)
-        return NextResponse.redirect(`${appUrl}${next}`)
+        return createAuthRedirect(`${appUrl}${next}`)
       }
     } catch {
-      // fallthrough to error
+      // fallthrough
     }
   }
 
   return NextResponse.redirect(`${origin}/auth/login?error=auth_callback_error`)
 }
 
-// Создаёт профиль пользователя если не существует
+// Redirect с preview cookie (чтобы maintenance mode не блокировал после auth)
+function createAuthRedirect(url: string): NextResponse {
+  const response = NextResponse.redirect(url)
+
+  const previewSecret = process.env.PREVIEW_SECRET
+  if (previewSecret) {
+    response.cookies.set('preview-access', previewSecret, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 30 * 24 * 60 * 60,
+    })
+  }
+
+  return response
+}
+
 async function ensureProfile(supabase: any, user: any) {
   try {
     const { data: existing } = await supabase
@@ -101,6 +116,6 @@ async function ensureProfile(supabase: any, user: any) {
       })
     }
   } catch {
-    // Не блокируем auth из-за ошибки профиля
+    // Не блокируем auth
   }
 }

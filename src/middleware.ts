@@ -31,7 +31,7 @@ export async function middleware(request: NextRequest) {
   // === MAINTENANCE MODE ===
   // Если PREVIEW_SECRET задан — проверяем cookie. Пропускаем /preview, /coming-soon, /api/, /admin
   if (MAINTENANCE_MODE) {
-    const bypassRoutes = ['/preview', '/coming-soon', '/api/', '/admin']
+    const bypassRoutes = ['/preview', '/coming-soon', '/api/', '/admin', '/auth']
     const isBypassed = bypassRoutes.some(r => pathname.startsWith(r))
 
     if (!isBypassed) {
