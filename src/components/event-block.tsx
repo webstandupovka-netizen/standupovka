@@ -95,12 +95,12 @@ export function EventBlock({ user, hasAccess, streamData }: EventBlockProps) {
       <img
         src={posterSrc}
         alt=""
-        className="absolute inset-0 w-full h-full object-cover animate-ken-burns"
+        className="absolute inset-0 w-full h-full object-cover animate-ken-burns pointer-events-none"
       />
 
       {/* Gradient overlays */}
-      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-black/20" />
-      <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/30 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-black/20 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/30 to-transparent pointer-events-none" />
 
       {/* Content */}
       <div className="relative z-10 w-full max-w-[1200px] mx-auto px-4 md:px-6 pb-14 md:pb-24 pt-32" style={{ textShadow: '0 2px 20px rgba(0,0,0,0.5)' }}>
