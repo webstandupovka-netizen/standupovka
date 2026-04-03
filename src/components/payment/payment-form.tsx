@@ -58,7 +58,7 @@ export function PaymentForm({ streamId, streamTitle, price, currency, onSuccess 
 
       if (!response.ok) {
         if (data.error === 'Payment already completed') {
-          router.push('/stream')
+          router.push(`/stream?stream_id=${streamId}`)
           return
         }
         throw new Error(data.error || 'Ошибка создания платежа')

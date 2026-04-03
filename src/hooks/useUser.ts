@@ -88,23 +88,28 @@ export function useUser(): UseUserReturn {
 
         if (user) {
           setUser(user)
+          setLoading(false) // Показываем страницу сразу, профиль подгрузится
           await fetchProfile(user.id)
         } else {
           setUser(null)
           setProfile(null)
+          setLoading(false)
         }
       } catch {
-        // Нет сессии или сеть недоступна — просто не авторизован
         if (isMounted) {
           setUser(null)
           setProfile(null)
+          setLoading(false)
         }
-      } finally {
-        if (isMounted) setLoading(false)
       }
     }
 
     loadUser()
+
+    // Таймаут — если через 3 сек всё ещё loading, показываем страницу
+    const timeout = setTimeout(() => {
+      if (isMounted) setLoading(false)
+    }, 3000)
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event) => {
@@ -123,6 +128,7 @@ export function useUser(): UseUserReturn {
 
     return () => {
       isMounted = false
+      clearTimeout(timeout)
       subscription.unsubscribe()
     }
   }, [fetchProfile])

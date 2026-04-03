@@ -44,7 +44,8 @@ function PaymentSuccessPageInner() {
   }, [orderId, payId])
 
   const handleContinue = () => {
-    router.push('/stream')
+    const streamId = paymentStatus?.metadata?.stream_id
+    router.push(streamId ? `/stream?stream_id=${streamId}` : '/')
   }
 
   const handleGoHome = () => {
