@@ -103,7 +103,7 @@ export function EventBlock({ user, hasAccess, streamData }: EventBlockProps) {
       <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/30 to-transparent pointer-events-none" />
 
       {/* Content */}
-      <div className="relative z-10 w-full max-w-[1200px] mx-auto px-4 md:px-6 pb-14 md:pb-24 pt-32" style={{ textShadow: '0 2px 20px rgba(0,0,0,0.5)' }}>
+      <div className="relative z-10 w-full max-w-[1200px] mx-auto px-4 md:px-6 pb-14 md:pb-24 pt-32 pointer-events-auto">
         {/* Meta line — date + tags */}
         <div className="flex items-center gap-3 mb-5">
           <span className="text-red-500 font-semibold text-sm tracking-wide uppercase">{day} • {time}</span>
@@ -129,7 +129,7 @@ export function EventBlock({ user, hasAccess, streamData }: EventBlockProps) {
         </div>
 
         {/* CTA */}
-        <div className="flex flex-wrap items-center gap-4 relative z-20" style={{ textShadow: 'none' }}>
+        <div className="flex flex-wrap items-center gap-4 relative z-20">
           {hasAccess ? (
             <Link href={`/stream?stream_id=${streamData.id}`} className="group bg-white text-black font-bold text-sm md:text-base px-7 py-3.5 rounded-full inline-flex items-center gap-2.5 hover:bg-white/90 transition-all duration-200 active:scale-[0.97] cursor-pointer">
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
