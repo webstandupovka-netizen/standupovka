@@ -257,6 +257,9 @@ export default function StreamPage() {
 
   return (
     <div className="min-h-screen bg-black">
+      {/* Скрываем глобальный navbar — у stream своя навигация */}
+      <style>{`header { display: none !important; }`}</style>
+
       {/* Navigation Header */}
       <motion.div 
         initial={{ opacity: 0, y: -20 }}

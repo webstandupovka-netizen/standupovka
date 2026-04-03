@@ -55,27 +55,14 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    // Проверяем, нет ли уже активного (pending/processing) платежа для этого стрима
-    const { data: pendingPayment } = await supabaseAdmin
+    // Автоматически отменяем старые pending/processing платежи (>30 мин)
+    const thirtyMinAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString()
+    await supabaseAdmin
       .from('payments')
-      .select('*')
+      .update({ status: 'failed', updated_at: new Date().toISOString() })
       .eq('user_id', user.id)
       .in('status', ['pending', 'processing'])
-      .contains('metadata', { stream_id: streamId })
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .single()
-
-    if (pendingPayment && pendingPayment.maib_transaction_id) {
-      // Есть активный платёж — возвращаем его данные вместо создания нового
-      return NextResponse.json({
-        error: 'Payment already in progress',
-        existingPayment: {
-          orderId: pendingPayment.maib_order_id,
-          status: pendingPayment.status
-        }
-      }, { status: 409 })
-    }
+      .lt('created_at', thirtyMinAgo)
 
     // Создаем заказ в нашей БД
     const orderId = `order_${Date.now()}_${user.id.slice(0, 8)}`
