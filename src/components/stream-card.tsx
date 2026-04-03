@@ -39,7 +39,7 @@ export function StreamCard({ stream, accessStatus }: StreamCardProps) {
     <Link href={ctaHref}>
       <div className="group relative rounded-xl overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.03] hover:shadow-2xl hover:shadow-black/50">
         {/* Poster */}
-        <div className="aspect-[3/4] relative bg-gray-900">
+        <div className="aspect-square relative bg-gray-900">
           {(stream.poster_card_url || stream.poster_url) ? (
             /* eslint-disable-next-line @next/next/no-img-element */
             <img
