@@ -79,7 +79,13 @@ export default function StreamPage() {
           .single()
 
         const urlParams = new URLSearchParams(window.location.search)
-        let streamId: string | null = urlParams.get('stream_id') || '550e8400-e29b-41d4-a716-446655440000'
+        let streamId: string | null = urlParams.get('stream_id')
+
+        if (!streamId) {
+          setError('ID-ul transmisiunii nu este specificat')
+          setIsLoading(false)
+          return
+        }
         let hasAccess = false
 
         // Если у пользователя есть бесплатный доступ

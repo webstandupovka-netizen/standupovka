@@ -131,14 +131,14 @@ export function EventBlock({ user, hasAccess, streamData }: EventBlockProps) {
         {/* CTA */}
         <div className="flex flex-wrap items-center gap-4" style={{ textShadow: 'none' }}>
           {hasAccess ? (
-            <Link href="/stream">
+            <Link href={`/stream?stream_id=${streamData.id}`}>
               <button className="cursor-pointer group bg-white text-black font-bold text-sm md:text-base px-7 py-3.5 rounded-full flex items-center gap-2.5 hover:bg-white/90 transition-all duration-200 hover:scale-[1.03] active:scale-[0.97]">
                 <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                 Vizionează acum
               </button>
             </Link>
           ) : user?.free_access ? (
-            <Link href="/stream">
+            <Link href={`/stream?stream_id=${streamData.id}`}>
               <button className="cursor-pointer group bg-white text-black font-bold text-sm md:text-base px-7 py-3.5 rounded-full flex items-center gap-2.5 hover:bg-white/90 transition-all duration-200 hover:scale-[1.03] active:scale-[0.97]">
                 <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
                 Vizionează gratuit
