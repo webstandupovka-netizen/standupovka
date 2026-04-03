@@ -31,128 +31,101 @@ export function useUser(): UseUserReturn {
         .single()
 
       if (error) {
-        // Если профиль не найден, попытаемся создать его
         if (error.code === 'PGRST116') {
-          console.log('Profile not found, creating new profile...')
-          
-          // Проверяем, не существует ли уже профиль
-          const { data: existingProfile } = await supabase
-            .from('user_profiles')
-            .select('id')
-            .eq('id', userId)
-            .single()
-            
-          if (!existingProfile) {
-            // Получаем данные пользователя
-            const { data: { user: currentUser } } = await supabase.auth.getUser()
-            
-            if (currentUser) {
-              const { data: newProfile, error: createError } = await supabase
-                .from('user_profiles')
-                .insert({
-                  id: userId,
-                  email: currentUser.email || '',
-                  full_name: currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || '',
-                  created_at: new Date().toISOString(),
-                  updated_at: new Date().toISOString()
-                })
-                .select()
-                .single()
+          // Профиль не найден — создаём
+          const { data: { user: currentUser } } = await supabase.auth.getUser()
+          if (currentUser) {
+            const { data: newProfile } = await supabase
+              .from('user_profiles')
+              .insert({
+                id: userId,
+                email: currentUser.email || '',
+                full_name: currentUser.user_metadata?.full_name || currentUser.email?.split('@')[0] || '',
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              })
+              .select()
+              .single()
 
-              if (createError) {
-                console.error('Error creating profile:', createError)
-                setError('Failed to create user profile')
-                return
-              }
-
+            if (newProfile) {
               setProfile(newProfile)
               return
             }
           }
         }
-        
-        console.error('Error fetching profile:', error)
-        setError('Failed to fetch user profile')
         return
       }
 
       setProfile(data)
-    } catch (err) {
-      console.error('Profile fetch error:', err)
-      setError('Failed to fetch user profile')
+    } catch {
+      // Молча игнорируем — не блокируем UI
     }
   }, [])
 
   const refreshProfile = async () => {
-    if (user) {
-      await fetchProfile(user.id)
-    }
+    if (user) await fetchProfile(user.id)
   }
 
   const signOut = async () => {
     try {
-      setLoading(true)
-      const { error } = await supabase.auth.signOut()
-      if (error) {
-        setError('Failed to sign out')
-      } else {
-        setUser(null)
-        setProfile(null)
-      }
-    } catch (err) {
+      await supabase.auth.signOut()
+      setUser(null)
+      setProfile(null)
+      setError(null)
+    } catch {
       setError('Failed to sign out')
-    } finally {
-      setLoading(false)
     }
+    // НЕ ставим loading — signOut не должен показывать спиннер
   }
 
   useEffect(() => {
-    let isMounted = true;
+    let isMounted = true
 
-    async function getUserData() {
-      if (!isMounted) return;
-      setLoading(true);
+    async function loadUser() {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (isMounted) {
-          if (user) {
-            setUser(user);
-            await fetchProfile(user.id);
-          } else {
-            setUser(null);
-            setProfile(null);
-          }
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!isMounted) return
+
+        if (user) {
+          setUser(user)
+          await fetchProfile(user.id)
+        } else {
+          setUser(null)
+          setProfile(null)
         }
-      } catch (e) {
-        if(isMounted) setError('Failed to get user data');
-        console.error(e);
+      } catch {
+        // Нет сессии или сеть недоступна — просто не авторизован
+        if (isMounted) {
+          setUser(null)
+          setProfile(null)
+        }
       } finally {
-        if (isMounted) setLoading(false);
+        if (isMounted) setLoading(false)
       }
     }
 
-    getUserData();
+    loadUser()
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'USER_UPDATED') {
-          getUserData();
+      (event) => {
+        if (!isMounted) return
+
+        if (event === 'SIGNED_OUT') {
+          // Sign out — сразу чистим без повторного запроса к серверу
+          setUser(null)
+          setProfile(null)
+          setLoading(false)
+        } else if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
+          loadUser()
         }
       }
-    );
+    )
 
     return () => {
-      isMounted = false;
-      subscription.unsubscribe();
-    };
-  }, [fetchProfile]);
+      isMounted = false
+      subscription.unsubscribe()
+    }
+  }, [fetchProfile])
 
-  return {
-    user,
-    profile,
-    loading,
-    error,
-    signOut,
-    refreshProfile
-  }
+  return { user, profile, loading, error, signOut, refreshProfile }
 }
