@@ -233,14 +233,14 @@ function BuyPageInner() {
           className="flex flex-col md:flex-row gap-0 bg-white rounded-2xl shadow-2xl shadow-black/30 overflow-hidden"
         >
           {/* Left — Square poster + event info */}
-          <div className="relative md:w-[340px] flex-shrink-0">
+          <div className="relative w-full md:w-[400px] aspect-square flex-shrink-0 overflow-hidden">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={stream.poster_square_url || stream.poster_url || '/event_poster.jpg'}
               alt={stream.title}
-              className="w-full aspect-square md:h-full object-cover"
+              className="absolute inset-0 w-full h-full object-cover"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent md:bg-gradient-to-r md:from-transparent md:via-transparent md:to-black/10" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-5 md:p-6">
               <h1 className="text-white font-bold text-lg md:text-xl leading-tight mb-1">{stream.title}</h1>
               <p className="text-white/60 text-xs">{dateStr} • {timeStr}</p>
