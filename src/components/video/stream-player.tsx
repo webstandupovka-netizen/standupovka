@@ -44,6 +44,8 @@ export function StreamPlayer({ streamId, isLive, liveEmbedUrl, poster, className
 
       if (data.type === 'cloudflare') {
         setVideoState({ type: 'cloudflare', token: data.token, videoId: data.videoId })
+      } else if (data.type === 'cloudflare-public') {
+        setVideoState({ type: 'cloudflare', videoId: data.videoId })
       } else if (data.type === 'direct') {
         setVideoState({ type: 'direct', url: data.url })
       } else {
@@ -113,10 +115,11 @@ export function StreamPlayer({ streamId, isLive, liveEmbedUrl, poster, className
     )
   }
 
-  // Cloudflare Stream — iframe с signed token
-  if (videoState.type === 'cloudflare' && videoState.token) {
+  // Cloudflare Stream — iframe (signed token или public videoId)
+  if (videoState.type === 'cloudflare' && (videoState.token || videoState.videoId)) {
     const subdomain = process.env.NEXT_PUBLIC_CLOUDFLARE_CUSTOMER_SUBDOMAIN || ''
-    const embedUrl = `https://${subdomain}.cloudflarestream.com/${videoState.token}/iframe`
+    const id = videoState.token || videoState.videoId
+    const embedUrl = `https://${subdomain}.cloudflarestream.com/${id}/iframe`
 
     return (
       <div className={cn('relative bg-black rounded-xl overflow-hidden', className)}>

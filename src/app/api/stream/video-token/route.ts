@@ -59,12 +59,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Stream not found' }, { status: 404 })
     }
 
-    // 4. Если есть Cloudflare video — генерируем signed token
+    // 4. Если есть Cloudflare video
     if (stream.cf_video_id) {
-      const token = CloudflareStreamService.createSignedToken(stream.cf_video_id, 900) // 15 мин
+      // Пробуем signed token, если ключи настроены
+      try {
+        const signingKeyId = process.env.CLOUDFLARE_STREAM_SIGNING_KEY_ID
+        const signingKeyPem = process.env.CLOUDFLARE_STREAM_SIGNING_KEY_PEM
+
+        if (signingKeyId && signingKeyPem) {
+          const token = CloudflareStreamService.createSignedToken(stream.cf_video_id, 900)
+          return NextResponse.json({
+            type: 'cloudflare',
+            token,
+            videoId: stream.cf_video_id,
+          })
+        }
+      } catch {
+        // Signing keys не настроены — fallback на прямой embed
+      }
+
+      // Без signed URL — прямой embed (видео должно быть публичным)
       return NextResponse.json({
-        type: 'cloudflare',
-        token,
+        type: 'cloudflare-public',
         videoId: stream.cf_video_id,
       })
     }
