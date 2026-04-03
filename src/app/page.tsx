@@ -19,53 +19,33 @@ export default function Home() {
 
   const fetchStreams = useCallback(async () => {
     try {
-      // Ближайшее будущее событие (или текущее live)
-      const { data: upcoming } = await supabase
+      // Все активные события, отсортированные по дате
+      const { data: allStreams } = await supabase
         .from('stream_settings')
         .select('*')
         .eq('is_active', true)
-        .gte('stream_start_time', new Date().toISOString())
-        .order('stream_start_time', { ascending: true })
-        .limit(1)
-        .single()
-
-      // Если нет будущего — берём текущее live
-      if (!upcoming) {
-        const { data: live } = await supabase
-          .from('stream_settings')
-          .select('*')
-          .eq('is_active', true)
-          .eq('is_live', true)
-          .limit(1)
-          .single()
-
-        if (live) {
-          setUpcomingStream(live)
-        } else {
-          // Берём последнее активное событие (даже если прошло)
-          const { data: latest } = await supabase
-            .from('stream_settings')
-            .select('*')
-            .eq('is_active', true)
-            .order('stream_start_time', { ascending: false })
-            .limit(1)
-            .single()
-
-          setUpcomingStream(latest)
-        }
-      } else {
-        setUpcomingStream(upcoming)
-      }
-
-      // Архив — прошедшие события с записями
-      const { data: archived } = await supabase
-        .from('stream_settings')
-        .select('*')
-        .eq('is_active', true)
-        .lt('stream_start_time', new Date().toISOString())
         .order('stream_start_time', { ascending: false })
 
-      setArchivedStreams(archived || [])
+      if (!allStreams || allStreams.length === 0) {
+        setUpcomingStream(null)
+        setArchivedStreams([])
+        return
+      }
+
+      const now = new Date().toISOString()
+
+      // Ищем: live > будущее > последнее
+      const live = allStreams.find(s => s.is_live)
+      const upcoming = allStreams.find(s => s.stream_start_time > now)
+      const hero = live || upcoming || allStreams[0]
+
+      setUpcomingStream(hero)
+
+      // Архив — все кроме hero, прошедшие
+      const archived = allStreams.filter(s =>
+        s.id !== hero.id && s.stream_start_time < now
+      )
+      setArchivedStreams(archived)
     } catch (error) {
       console.error('Error fetching streams:', error)
     }
