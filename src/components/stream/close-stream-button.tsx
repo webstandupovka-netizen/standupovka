@@ -2,21 +2,18 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
 import { LogOut, Loader2 } from 'lucide-react'
 
 interface CloseStreamButtonProps {
   streamId?: string
   className?: string
-  variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link'
-  size?: 'default' | 'sm' | 'lg' | 'icon'
+  variant?: string
+  size?: string
 }
 
-export function CloseStreamButton({ 
-  streamId, 
+export function CloseStreamButton({
+  streamId,
   className = '',
-  variant = 'outline',
-  size = 'default'
 }: CloseStreamButtonProps) {
   const [isLoading, setIsLoading] = useState(false)
   const [isOpen, setIsOpen] = useState(false)
@@ -25,32 +22,14 @@ export function CloseStreamButton({
   const handleCloseStream = async () => {
     try {
       setIsLoading(true)
-      
-      const response = await fetch('/api/stream/close-session', {
+      await fetch('/api/stream/close-session', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          streamId,
-          reason: 'user_request'
-        })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ streamId, reason: 'user_request' })
       })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to close stream')
-      }
-
-      console.log('Stream closed successfully:', data)
-
-      // Перенаправляем на главную страницу
       router.push('/')
-      
     } catch (error) {
       console.error('Error closing stream:', error)
-      console.error('Failed to close stream:', error)
     } finally {
       setIsLoading(false)
       setIsOpen(false)
@@ -59,55 +38,43 @@ export function CloseStreamButton({
 
   return (
     <>
-      <Button 
-        variant={variant} 
-        size={size}
-        className={`text-red-400 border-red-400 hover:bg-red-400 hover:text-white ${className}`}
-        disabled={isLoading}
+      <button
+        className={`text-white/40 hover:text-red-400 text-xs flex items-center gap-1.5 transition-colors cursor-pointer ${className}`}
         onClick={() => setIsOpen(true)}
       >
-        {isLoading ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
-        ) : (
-          <LogOut className="h-4 w-4 mr-2" />
-        )}
-        Închide transmisia
-      </Button>
-      
+        <LogOut className="h-3.5 w-3.5" />
+        <span className="hidden sm:inline">Închide</span>
+      </button>
+
       {isOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-gray-900 border border-gray-700 rounded-lg max-w-md w-full p-6">
-            <h2 className="text-xl font-bold text-white mb-2">
-              Închide transmisia?
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-[100]">
+          <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl">
+            <h2 className="text-gray-900 font-bold text-lg mb-2">
+              Închideți transmisiunea?
             </h2>
-            <p className="text-gray-300 mb-6">
-              Это действие завершит вашу текущую сессию просмотра и закроет доступ к трансляции на всех устройствах. 
-              Вы сможете вернуться к просмотру позже, если у вас есть активный доступ.
+            <p className="text-gray-500 text-sm mb-6">
+              Sesiunea curentă va fi închisă. Puteți reveni oricând dacă aveți acces activ.
             </p>
-            
-            <div className="flex gap-3 justify-end">
-              <Button 
-                variant="outline"
-                className="bg-gray-800 border-gray-600 text-gray-300 hover:bg-gray-700"
+
+            <div className="flex gap-3">
+              <button
+                className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-2.5 rounded-xl transition-colors cursor-pointer text-sm"
                 disabled={isLoading}
                 onClick={() => setIsOpen(false)}
               >
                 Anulează
-              </Button>
-              <Button 
-                className="bg-red-600 hover:bg-red-700 text-white"
+              </button>
+              <button
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium py-2.5 rounded-xl transition-colors cursor-pointer text-sm flex items-center justify-center gap-2"
                 disabled={isLoading}
                 onClick={handleCloseStream}
               >
                 {isLoading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                    Se închide...
-                  </>
+                  <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  'Închide transmisia'
+                  'Închide'
                 )}
-              </Button>
+              </button>
             </div>
           </div>
         </div>
