@@ -1,21 +1,35 @@
 // app/api/auth/validate-device/route.ts
 import { NextRequest, NextResponse } from 'next/server'
-import { supabaseServer } from '@/lib/database/client'
+import { supabaseAdmin } from '@/lib/supabase/admin'
 import { SessionManager } from '@/lib/auth/session'
+import { createClient as createServerClient } from '@/lib/supabase/server'
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId, fingerprintId, deviceInfo } = await request.json()
+    // Проверяем авторизацию — userId берём из сессии, не из body
+    const supabase = await createServerClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
-    if (!userId || !fingerprintId) {
+    if (!user) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    const { fingerprintId, deviceInfo } = await request.json()
+
+    if (!fingerprintId) {
+      return NextResponse.json(
+        { error: 'Missing required field: fingerprintId' },
         { status: 400 }
       )
     }
 
+    const userId = user.id
+
     // Проверяем существующие активные сессии пользователя
-    const { data: existingSessions } = await supabaseServer
+    const { data: existingSessions } = await supabaseAdmin
       .from('user_sessions')
       .select('*')
       .eq('user_id', userId)
@@ -37,7 +51,7 @@ export async function POST(request: NextRequest) {
 
     // Проверяем лимит активных сессий (максимум 3 устройства)
     const activeSessionsCount = await SessionManager.getActiveSessionsCount(userId)
-    
+
     if (activeSessionsCount >= 3) {
       return NextResponse.json({
         isValid: false,
@@ -46,8 +60,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Создаем новую сессию
-    const ipAddress = request.headers.get('x-forwarded-for') || 
-                     request.headers.get('x-real-ip') || 
+    const ipAddress = request.headers.get('x-forwarded-for') ||
+                     request.headers.get('x-real-ip') ||
                      'unknown'
     const userAgent = request.headers.get('user-agent') || 'unknown'
 

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClientAuth } from '@/lib/auth/config'
-import { supabaseServer } from '@/lib/database/client'
+import { createClient as createServerClient } from '@/lib/supabase/server'
+import { supabaseAdmin } from '@/lib/supabase/admin'
 import { emailService } from '@/lib/email/service'
 import { z } from 'zod'
 
@@ -12,10 +12,10 @@ const sendEmailSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createServerClientAuth()
-    const { data: { session } } = await supabase.auth.getSession()
+    const supabase = await createServerClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
-    if (!session) {
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -23,14 +23,14 @@ export async function POST(request: NextRequest) {
     const { paymentId, userEmail, streamId } = sendEmailSchema.parse(body)
 
     // Получаем информацию о платеже
-    const { data: payment, error: paymentError } = await supabaseServer
+    const { data: payment, error: paymentError } = await supabaseAdmin
       .from('payments')
       .select(`
         *,
         user_profiles!inner(full_name, email)
       `)
       .eq('id', paymentId)
-      .eq('user_id', session.user.id)
+      .eq('user_id', user.id)
       .eq('status', 'completed')
       .single()
 
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     // Получаем информацию о стриме
     let streamData = null
     if (streamId || payment.metadata?.stream_id) {
-      const { data: stream } = await supabaseServer
+      const { data: stream } = await supabaseAdmin
         .from('stream_settings')
         .select('*')
         .eq('id', streamId || payment.metadata.stream_id)
@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
       streamTime,
       amount: payment.amount,
       currency: payment.currency,
-      userId: session.user.id
+      userId: user.id
     })
 
     if (!emailSent) {

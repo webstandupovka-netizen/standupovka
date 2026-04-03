@@ -13,7 +13,7 @@ export async function GET(
 ) {
   try {
     // Проверяем аутентификацию админа
-    const admin = getAdminFromRequest(request)
+    const admin = await getAdminFromRequest(request)
     
     if (!admin) {
       return NextResponse.json(
@@ -52,7 +52,7 @@ export async function PATCH(
 ) {
   try {
     // Проверяем аутентификацию админа
-    const admin = getAdminFromRequest(request)
+    const admin = await getAdminFromRequest(request)
     
     if (!admin) {
       return NextResponse.json(
@@ -67,19 +67,22 @@ export async function PATCH(
     // Валидируем входные данные
     const allowedFields = [
       'title',
-      'description', 
-      'castr_stream_id',
-      'castr_embed_url',
-      'castr_rtmp_url',
-      'castr_stream_key',
-      'castr_playback_url',
+      'description',
       'poster_url',
       'stream_start_time',
       'stream_end_time',
       'is_live',
       'is_active',
       'price',
-      'currency'
+      'currency',
+      'cf_input_id',
+      'cf_video_id',
+      'recorded_video_url',
+      'castr_stream_id',
+      'castr_embed_url',
+      'castr_rtmp_url',
+      'castr_stream_key',
+      'castr_playback_url'
     ]
     
     const updateData: any = {}
@@ -138,7 +141,7 @@ export async function DELETE(
 ) {
   try {
     // Проверяем аутентификацию админа
-    const admin = getAdminFromRequest(request)
+    const admin = await getAdminFromRequest(request)
     
     if (!admin) {
       return NextResponse.json(

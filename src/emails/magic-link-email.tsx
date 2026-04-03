@@ -3,7 +3,6 @@ import {
   Button,
   Container,
   Head,
-  Heading,
   Html,
   Img,
   Link,
@@ -20,99 +19,71 @@ interface MagicLinkEmailProps {
   supportEmail?: string
 }
 
-const baseUrl = process.env.VERCEL_URL
-  ? `https://${process.env.VERCEL_URL}`
-  : (process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000')
+const LOGO_URL = 'https://npxqxjrunqroavlzvdce.supabase.co/storage/v1/object/public/posters/stand.png'
 
 export const MagicLinkEmail = ({
   userEmail = 'user@example.com',
-  magicLink = `${baseUrl}/auth/verify`,
+  magicLink = 'https://standupovka.live/auth/verify',
   expiresIn = '1 oră',
   supportEmail = 'standupovkaclub@gmail.com',
 }: MagicLinkEmailProps) => {
   return (
     <Html>
       <Head />
-      <Preview>Link-ul dvs. de conectare la Standup</Preview>
+      <Preview>Linkul dvs. de conectare la Standupovka</Preview>
       <Body style={main}>
         <Container style={container}>
-          <Section style={logoContainer}>
-            <Img
-              src="https://standupovka.live/event_poster.jpg"
-              width="400"
-              height="400"
-              alt="Standupovka"
-              style={logo}
-            />
+          {/* Header */}
+          <Section style={header}>
+            <Img src={LOGO_URL} width="180" height="50" alt="Standupovka" style={logo} />
           </Section>
-          
-          <Heading style={h1}>Conectare la Standup</Heading>
-          
-          <Text style={heroText}>
-            Am primit o cerere de conectare la contul dvs. Standup de la adresa {userEmail}.
-          </Text>
-          
-          <Section style={codeBox}>
-            <Text style={confirmationCodeText}>
-              Faceți clic pe butonul de mai jos pentru a vă conecta la sistem. 
-              Acest link este valabil timp de {expiresIn}.
+
+          {/* Content */}
+          <Section style={content}>
+            <Text style={greeting}>Bună!</Text>
+
+            <Text style={paragraph}>
+              Am primit o cerere de conectare pentru <strong>{userEmail}</strong>.
+              Apăsați butonul de mai jos pentru a vă conecta la cont.
+            </Text>
+
+            {/* CTA Button */}
+            <Section style={buttonContainer}>
+              <Button style={button} href={magicLink}>
+                Conectare la Standupovka
+              </Button>
+            </Section>
+
+            <Text style={expiry}>
+              Linkul este valabil {expiresIn} și poate fi folosit o singură dată.
+            </Text>
+
+            {/* Fallback link */}
+            <Section style={divider} />
+
+            <Text style={smallText}>
+              Dacă butonul nu funcționează, copiați acest link:
+            </Text>
+            <Text style={linkStyle}>
+              <Link href={magicLink} style={linkAnchor}>
+                {magicLink}
+              </Link>
+            </Text>
+
+            <Section style={divider} />
+
+            <Text style={smallText}>
+              Dacă nu ați solicitat această conectare, ignorați acest email.
             </Text>
           </Section>
-          
-          <Section style={buttonContainer}>
-            <Button style={button} href={magicLink}>
-              Conectare la Standup
-            </Button>
-          </Section>
-          
-          <Text style={paragraph}>
-            Dacă butonul nu funcționează, copiați și lipiți acest link în browser:
-          </Text>
-          
-          <Section style={linkContainer}>
-            <Link href={magicLink} style={linkText}>
-              {magicLink}
-            </Link>
-          </Section>
-          
-          <Section style={warningBox}>
-            <Text style={warningText}>
-              ⚠️ <strong>Important:</strong> Dacă nu ați solicitat această conectare, 
-              ignorați acest email. Contul dvs. va rămâne în siguranță.
-            </Text>
-          </Section>
-          
-          <Text style={paragraph}>
-            <strong>Sfaturi de securitate:</strong>
-          </Text>
-          
-          <Section style={tipsList}>
-            <Text style={tipItem}>🔒 Nu împărtășiți niciodată acest link cu alții</Text>
-            <Text style={tipItem}>⏰ Link-ul va expira automat după {expiresIn}</Text>
-            <Text style={tipItem}>🚫 Link-ul poate fi folosit o singură dată</Text>
-            <Text style={tipItem}>📧 Verificați întotdeauna adresa expeditorului</Text>
-          </Section>
-          
-          <Text style={paragraph}>
-            Dacă aveți întrebări sau probleme cu conectarea, contactați 
-            echipa noastră de suport la adresa{' '}
-            <Link href={`mailto:${supportEmail}`} style={link}>
-              {supportEmail}
-            </Link>
-            .
-          </Text>
-          
-          <Text style={paragraph}>
-            Cu cele mai bune urări,<br />
-            Standupovka
-          </Text>
-          
+
+          {/* Footer */}
           <Section style={footer}>
             <Text style={footerText}>
-              Acest email a fost trimis automat. Vă rugăm să nu răspundeți.
+              <Link href={`mailto:${supportEmail}`} style={footerLink}>{supportEmail}</Link>
             </Text>
             <Text style={footerText}>
-              © 2025 Standupovka. Toate drepturile rezervate.
+              © {new Date().getFullYear()} Standupovka. Toate drepturile rezervate.
             </Text>
           </Section>
         </Container>
@@ -123,145 +94,109 @@ export const MagicLinkEmail = ({
 
 export default MagicLinkEmail
 
-// Стили
 const main = {
-  backgroundColor: '#ffffff',
-  fontFamily:
-    '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen-Sans,Ubuntu,Cantarell,"Helvetica Neue",sans-serif',
+  backgroundColor: '#f6f6f6',
+  fontFamily: '-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif',
 }
 
 const container = {
   margin: '0 auto',
-  padding: '20px 0 48px',
-  maxWidth: '560px',
+  padding: '40px 20px',
+  maxWidth: '480px',
 }
 
-const logoContainer = {
-  marginTop: '32px',
+const header = {
+  backgroundColor: '#111111',
+  borderRadius: '12px 12px 0 0',
+  padding: '32px 0',
+  textAlign: 'center' as const,
 }
 
 const logo = {
   margin: '0 auto',
 }
 
-const h1 = {
-  color: '#333',
-  fontSize: '24px',
-  fontWeight: 'bold',
-  margin: '40px 0',
-  padding: '0',
-  textAlign: 'center' as const,
+const content = {
+  backgroundColor: '#ffffff',
+  padding: '32px 32px 24px',
 }
 
-const heroText = {
-  color: '#333',
-  fontSize: '16px',
-  lineHeight: '26px',
-  margin: '16px 0',
-}
-
-const codeBox = {
-  background: 'rgb(245, 244, 245)',
-  borderRadius: '4px',
-  margin: '16px auto 14px',
-  verticalAlign: 'middle',
-  width: '100%',
-  maxWidth: '400px',
-}
-
-const confirmationCodeText = {
-  color: '#333',
-  fontSize: '14px',
-  fontWeight: 'bold',
-  lineHeight: '24px',
-  margin: '0',
-  padding: '16px',
-  textAlign: 'center' as const,
-}
-
-const buttonContainer = {
-  margin: '27px auto',
-  width: 'auto',
-  textAlign: 'center' as const,
-}
-
-const button = {
-  backgroundColor: '#5469d4',
-  borderRadius: '6px',
-  color: '#fff',
-  fontSize: '16px',
-  fontWeight: 'bold',
-  textDecoration: 'none',
-  textAlign: 'center' as const,
-  display: 'inline-block',
-  width: '200px',
-  padding: '14px 20px',
+const greeting = {
+  color: '#111111',
+  fontSize: '22px',
+  fontWeight: '700' as const,
+  margin: '0 0 16px',
 }
 
 const paragraph = {
-  color: '#333',
-  fontSize: '16px',
-  lineHeight: '26px',
-  margin: '16px 0',
+  color: '#444444',
+  fontSize: '15px',
+  lineHeight: '24px',
+  margin: '0 0 24px',
 }
 
-const linkContainer = {
-  background: '#f8f9fa',
-  border: '1px solid #e9ecef',
-  borderRadius: '4px',
-  margin: '16px 0',
-  padding: '12px',
+const buttonContainer = {
+  textAlign: 'center' as const,
+  margin: '0 0 24px',
+}
+
+const button = {
+  backgroundColor: '#dc2626',
+  borderRadius: '10px',
+  color: '#ffffff',
+  fontSize: '16px',
+  fontWeight: '600' as const,
+  textDecoration: 'none',
+  textAlign: 'center' as const,
+  display: 'inline-block',
+  padding: '14px 40px',
+}
+
+const expiry = {
+  color: '#888888',
+  fontSize: '13px',
+  textAlign: 'center' as const,
+  margin: '0 0 24px',
+}
+
+const divider = {
+  borderTop: '1px solid #eeeeee',
+  margin: '20px 0',
+}
+
+const smallText = {
+  color: '#999999',
+  fontSize: '12px',
+  lineHeight: '18px',
+  margin: '0 0 8px',
+}
+
+const linkStyle = {
+  margin: '0 0 0',
   wordBreak: 'break-all' as const,
 }
 
-const linkText = {
-  color: '#5469d4',
-  fontSize: '14px',
-  textDecoration: 'underline',
-}
-
-const warningBox = {
-  background: '#fff3cd',
-  border: '1px solid #ffeaa7',
-  borderRadius: '4px',
-  margin: '24px 0',
-  padding: '16px',
-}
-
-const warningText = {
-  color: '#856404',
-  fontSize: '14px',
-  lineHeight: '20px',
-  margin: '0',
-}
-
-const tipsList = {
-  margin: '16px 0',
-  padding: '0 20px',
-}
-
-const tipItem = {
-  color: '#333',
-  fontSize: '14px',
-  lineHeight: '24px',
-  margin: '8px 0',
-}
-
-const link = {
-  color: '#5469d4',
+const linkAnchor = {
+  color: '#dc2626',
+  fontSize: '12px',
   textDecoration: 'underline',
 }
 
 const footer = {
-  borderTop: '1px solid #eaeaea',
-  marginTop: '32px',
-  paddingTop: '16px',
+  backgroundColor: '#111111',
+  borderRadius: '0 0 12px 12px',
+  padding: '20px 32px',
+  textAlign: 'center' as const,
 }
 
 const footerText = {
   color: '#666666',
-  fontSize: '12px',
+  fontSize: '11px',
   lineHeight: '16px',
-  margin: '4px 0',
-  textAlign: 'center' as const,
+  margin: '2px 0',
+}
+
+const footerLink = {
+  color: '#999999',
+  textDecoration: 'underline',
 }

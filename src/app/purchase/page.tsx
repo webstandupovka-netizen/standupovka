@@ -10,7 +10,7 @@ import { PaymentForm } from '@/components/payment/payment-form'
 import { Calendar, Clock, MapPin, Users, Star, Ticket, Play, ArrowRight, Shield, Zap, Globe } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { createClient } from '@/lib/supabase-client'
+import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
 // Datele evenimentului

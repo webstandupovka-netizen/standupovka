@@ -14,12 +14,9 @@ export async function PATCH(
 ) {
   try {
     // Проверяем авторизацию админа
-    const admin = getAdminFromRequest(request)
-    
-    console.log('Admin auth check:', { hasAdmin: !!admin, adminId: admin?.adminId })
+    const admin = await getAdminFromRequest(request)
 
     if (!admin) {
-      console.log('Unauthorized: no admin found')
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }

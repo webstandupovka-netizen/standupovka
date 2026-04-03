@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { Loader2, Play, Star } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { createClient } from '@/lib/supabase-client'
+import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 import Image from 'next/image'
 
@@ -99,12 +99,13 @@ function BuyPageInner() {
         // Verificăm dacă utilizatorul are acces
         const { data: { session } } = await supabase.auth.getSession()
         
-        if (session) {
+        if (session && streamId) {
           const { data: payment } = await supabase
             .from('payments')
             .select('*')
             .eq('user_id', session.user.id)
             .eq('status', 'completed')
+            .contains('metadata', { stream_id: streamId })
             .single()
 
           if (payment) {
@@ -217,184 +218,104 @@ function BuyPageInner() {
     )
   }
 
+  const eventDate = new Date(stream.stream_start_time)
+  const dateStr = eventDate.toLocaleDateString('ro-RO', { day: 'numeric', month: 'long', year: 'numeric' })
+  const timeStr = eventDate.toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' })
+
   return (
-    <div className="min-h-[calc(100vh-120px)] py-4 md:py-8">
-      <div className="container mx-auto px-4 md:px-6 max-w-[1200px]">
+    <div className="min-h-[calc(100vh-120px)] flex items-center justify-center py-8 md:py-16 pt-24">
+      <div className="w-full max-w-[900px] mx-auto px-4 md:px-6">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="flex flex-col lg:flex-row gap-8"
+          className="flex flex-col md:flex-row gap-0 bg-white rounded-2xl shadow-2xl shadow-black/30 overflow-hidden"
         >
-          {/* Partea stângă - Informații despre eveniment */}
-          <div className="flex-1 space-y-8">
-            {/* Informații principale despre eveniment */}
-            <div className="bg-gray-800/50 rounded-xl p-4 md:p-6 space-y-4 md:space-y-6">
-              <div className="space-y-4">
-                <h1 className="text-white font-black text-2xl md:text-4xl lg:text-5xl leading-tight uppercase">
-                  {stream.title}
-                </h1>
-                <div className="max-w-lg">
-                  <p className="text-gray-200 text-sm md:text-base leading-relaxed">
-                    {stream.description}
-                  </p>
-                </div>
-              </div>
-
-              {/* Posterul evenimentului */}
-              <div className="w-full max-w-[400px] aspect-square">
-                <img 
-                  src="/event_poster.jpg" 
-                  alt={stream.title}
-                  className="w-full h-full object-cover rounded-xl md:rounded-2xl"
-                />
-              </div>
-
-              {/* Informații despre dată și status */}
-              <div className="space-y-4">
-                {/* Data și ora */}
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-3">
-                    <img src="/calendar.svg" alt="Calendar" className="w-6 h-6" />
-                    <span className="text-gray-200 font-bold text-sm">Începutul</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-gray-200 font-bold text-sm">
-                      {new Date(stream.stream_start_time).toLocaleDateString('ro-RO', { day: 'numeric', month: 'long' })}
-                    </span>
-                    <div className="w-px h-5 bg-gray-200"></div>
-                    <span className="text-gray-200 font-bold text-lg">
-                      {new Date(stream.stream_start_time).toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' })}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Status */}
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-3 h-3 rounded-full ${
-                      stream.is_live ? 'bg-red-500' : 'bg-gray-400'
-                    }`}></div>
-                    <span className="text-gray-200 font-bold text-sm">status</span>
-                  </div>
-                  <span className="text-gray-200 font-bold text-sm">
-                    {stream.is_live ? 'în direct' : 'nu în direct'}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Ce este inclus */}
-            <div className="bg-gray-800/50 rounded-3xl p-4 md:p-6">
-              <h3 className="text-gray-200 font-bold text-sm md:text-base mb-4">Ce este inclus</h3>
-              <div className="space-y-2 md:space-y-3">
-                <div className="flex items-center gap-2 md:gap-3">
-                  <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-gray-200 text-xs md:text-sm">Vizionare nelimitată în flux</span>
-                </div>
-                <div className="flex items-center gap-2 md:gap-3">
-                  <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-gray-200 text-xs md:text-sm">Calitate video HD</span>
-                </div>
-                <div className="flex items-center gap-2 md:gap-3">
-                  <div className="w-1.5 h-1.5 md:w-2 md:h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-gray-200 text-xs md:text-sm">Acces de pe orice dispozitiv</span>
-                </div>
-              </div>
+          {/* Left — Poster + event info */}
+          <div className="relative md:w-[340px] flex-shrink-0">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={stream.poster_url || '/event_poster.jpg'}
+              alt={stream.title}
+              className="w-full h-48 md:h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent md:bg-gradient-to-r md:from-transparent md:via-transparent md:to-black/10" />
+            <div className="absolute bottom-0 left-0 right-0 p-5 md:p-6">
+              <h1 className="text-white font-bold text-lg md:text-xl leading-tight mb-1">{stream.title}</h1>
+              <p className="text-white/60 text-xs">{dateStr} • {timeStr}</p>
             </div>
           </div>
 
-          {/* Partea dreaptă - Formularul de plată */}
-          <div className="flex-1 max-w-md">
-            <div className="bg-gray-800/50 border border-gray-600 rounded-xl p-4 md:p-6 space-y-4 md:space-y-6">
-              {/* Titlul */}
-              <div className="space-y-4">
-                <h2 className="text-white font-bold text-lg md:text-xl">Plata accesului</h2>
-                <div className="flex gap-2">
-                  <span className="text-gray-400 text-sm">Event:</span>
-                  <span className="text-white text-sm">așa, bună seara!</span>
+          {/* Right — Payment card */}
+          <div className="flex-1 p-6 md:p-8">
+            <h2 className="text-gray-900 font-bold text-xl mb-6">Achiziționează accesul</h2>
+
+            {/* What's included */}
+            <div className="space-y-3 mb-6">
+              {[
+                'Vizionare live în calitate HD',
+                'Acces la înregistrare după eveniment',
+                'Un dispozitiv simultan'
+              ].map((item, i) => (
+                <div key={i} className="flex items-center gap-2.5">
+                  <svg className="w-4 h-4 text-green-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                  <span className="text-gray-600 text-sm">{item}</span>
                 </div>
+              ))}
+            </div>
+
+            {/* Price */}
+            <div className="bg-gray-50 rounded-xl p-4 mb-6">
+              <div className="flex justify-between items-center">
+                <span className="text-gray-500 text-sm">Total</span>
+                <span className="text-gray-900 font-bold text-2xl">{stream.price} {stream.currency}</span>
               </div>
+            </div>
 
-              {/* Informații despre cost */}
-              <div className="bg-gray-800/50 border border-gray-600 rounded-xl p-3 md:p-4 space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-gray-200 text-xs md:text-sm">Cost:</span>
-                  <span className="text-gray-200 font-bold text-xs md:text-sm">300 MDL</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-200 text-xs md:text-sm">Acces:</span>
-                  <span className="text-gray-200 text-xs md:text-sm">Vizionare nelimitată</span>
-                </div>
-              </div>
+            {/* Terms */}
+            <div className="flex items-start gap-2.5 mb-5">
+              <input
+                type="checkbox"
+                id="terms-agreement"
+                checked={agreedToTerms}
+                onChange={(e) => setAgreedToTerms(e.target.checked)}
+                className="mt-0.5 w-4 h-4 accent-gray-900 rounded cursor-pointer"
+              />
+              <label htmlFor="terms-agreement" className="text-gray-400 text-xs leading-relaxed cursor-pointer">
+                Sunt de acord cu{' '}
+                <Link href="/terms" className="text-gray-600 underline hover:text-gray-900">termenii</Link>
+                {' '}și{' '}
+                <Link href="/privacy" className="text-gray-600 underline hover:text-gray-900">politica de confidențialitate</Link>
+              </label>
+            </div>
 
-              {/* Notificare */}
-              <p className="text-gray-200 text-xs md:text-sm">
-                Accesul se activează imediat după efectuarea plății
-              </p>
+            {/* Pay button */}
+            <button
+              onClick={handlePayment}
+              disabled={isLoading || !agreedToTerms}
+              className="w-full bg-gray-900 hover:bg-gray-800 disabled:bg-gray-200 text-white disabled:text-gray-400 font-semibold py-3.5 px-6 rounded-xl transition-all duration-200 cursor-pointer disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Se procesează...
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                  Plătește {stream.price} {stream.currency}
+                </>
+              )}
+            </button>
 
-              {/* Modalități de plată */}
-               <div className="space-y-3 md:space-y-4">
-                 <div className="space-y-2 md:space-y-3">
-                   <p className="text-white text-xs md:text-sm font-normal">Pay Online:</p>
-                   <div className="flex items-center gap-2 md:gap-3">
-                     <Image 
-                       src="/maib-logo.svg" 
-                       alt="MAIB" 
-                       width={110} 
-                       height={16} 
-                       className="h-3 md:h-4 w-auto"
-                     />
-                   </div>
-                 </div>
-
-                 {/* Checkbox pentru acordul cu termenii */}
-                 <div className="flex items-start gap-3">
-                   <input
-                     type="checkbox"
-                     id="terms-agreement"
-                     checked={agreedToTerms}
-                     onChange={(e) => setAgreedToTerms(e.target.checked)}
-                     className="mt-1 w-4 h-4 text-red-600 bg-gray-700 border-gray-600 rounded focus:outline-none"
-                   />
-                   <label htmlFor="terms-agreement" className="text-gray-400 text-xs leading-relaxed cursor-pointer">
-                     Sunt de acord cu{' '}
-                     <Link href="/terms" className="text-red-400 hover:text-red-300 underline">
-                       termenii și condițiile
-                     </Link>
-                     {' '}și{' '}
-                     <Link href="/privacy" className="text-red-400 hover:text-red-300 underline">
-                       politica de confidențialitate
-                     </Link>
-                   </label>
-                 </div>
-                 {/* Butonul de plată */}
-                  <button 
-                    onClick={handlePayment}
-                    disabled={isLoading || !agreedToTerms}
-                    className="bg-red-600 hover:bg-red-700 transition-colors rounded-xl px-4 md:px-6 py-2.5 md:py-3 cursor-pointer w-full disabled:opacity-50"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-6 h-6 flex items-center justify-center">
-                          <Image 
-                            src="/pay.svg" 
-                            alt="Pay" 
-                            width={20} 
-                            height={21} 
-                            className="w-5 h-5"
-                          />
-                        </div>
-                        <span className="text-white font-bold text-sm md:text-base uppercase">plătește</span>
-                      </div>
-                      <div className="bg-white rounded-xl px-3 py-1.5">
-                        <span className="text-red-600 font-black text-base md:text-lg uppercase">300 mdl</span>
-                      </div>
-                    </div>
-                  </button>
-               </div>
-
-
+            {/* Payment method */}
+            <div className="flex items-center justify-center gap-2 mt-4">
+              <span className="text-gray-300 text-[10px]">Plata securizată prin</span>
+              <Image src="/maib-logo.svg" alt="MAIB" width={60} height={12} className="h-3 w-auto opacity-40" />
             </div>
           </div>
         </motion.div>

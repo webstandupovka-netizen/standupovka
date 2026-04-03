@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClientAuth } from '@/lib/auth/config'
+import { createClient as createServerClient } from '@/lib/supabase/server'
 import { MAIBPaymentService } from '@/lib/payments/maib'
-import { supabaseServer } from '@/lib/database/client'
+import { supabaseAdmin } from '@/lib/supabase/admin'
 import { z } from 'zod'
 
 const createPaymentSchema = z.object({
@@ -12,10 +12,10 @@ const createPaymentSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createServerClientAuth()
-    const { data: { session } } = await supabase.auth.getSession()
+    const supabase = await createServerClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
-    if (!session) {
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
                      '127.0.0.1'
 
     // Получаем информацию о стриме
-    const { data: stream, error: streamError } = await supabaseServer
+    const { data: stream, error: streamError } = await supabaseAdmin
       .from('stream_settings')
       .select('*')
       .eq('id', streamId)
@@ -39,28 +39,51 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Stream not found' }, { status: 404 })
     }
 
-    // Проверяем, нет ли уже оплаченного заказа
-    const { data: existingPayment } = await supabaseServer
+    // Проверяем, нет ли уже оплаченного заказа для этого стрима
+    const { data: completedPayment } = await supabaseAdmin
       .from('payments')
       .select('*')
-      .eq('user_id', session.user.id)
+      .eq('user_id', user.id)
       .eq('status', 'completed')
+      .contains('metadata', { stream_id: streamId })
       .single()
 
-    if (existingPayment) {
-      return NextResponse.json({ 
+    if (completedPayment) {
+      return NextResponse.json({
         error: 'Payment already completed',
         streamUrl: '/stream'
       }, { status: 400 })
     }
 
+    // Проверяем, нет ли уже активного (pending/processing) платежа для этого стрима
+    const { data: pendingPayment } = await supabaseAdmin
+      .from('payments')
+      .select('*')
+      .eq('user_id', user.id)
+      .in('status', ['pending', 'processing'])
+      .contains('metadata', { stream_id: streamId })
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single()
+
+    if (pendingPayment && pendingPayment.maib_transaction_id) {
+      // Есть активный платёж — возвращаем его данные вместо создания нового
+      return NextResponse.json({
+        error: 'Payment already in progress',
+        existingPayment: {
+          orderId: pendingPayment.maib_order_id,
+          status: pendingPayment.status
+        }
+      }, { status: 409 })
+    }
+
     // Создаем заказ в нашей БД
-    const orderId = `order_${Date.now()}_${session.user.id.slice(0, 8)}`
+    const orderId = `order_${Date.now()}_${user.id.slice(0, 8)}`
     
-    const { data: payment, error: paymentError } = await supabaseServer
+    const { data: payment, error: paymentError } = await supabaseAdmin
       .from('payments')
       .insert({
-        user_id: session.user.id,
+        user_id: user.id,
         amount: stream.price,
         currency: stream.currency,
         status: 'pending',
@@ -78,10 +101,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Получаем профиль пользователя
-    const { data: profile } = await supabaseServer
+    const { data: profile } = await supabaseAdmin
       .from('user_profiles')
       .select('*')
-      .eq('id', session.user.id)
+      .eq('id', user.id)
       .single()
 
     // Создаем платеж в MAIB
@@ -95,8 +118,8 @@ export async function POST(request: NextRequest) {
       clientIp: clientIp.split(',')[0].trim(),
       language: 'ru',
       description: `Оплата за просмотр: ${stream.title}`,
-      clientName: profile?.full_name || session.user.email?.split('@')[0],
-      email: session.user.email!,
+      clientName: profile?.full_name || user.email?.split('@')[0],
+      email: user.email!,
       phone: profile?.phone,
       orderId,
       callbackUrl: `${process.env.NEXT_PUBLIC_APP_URL}/api/payments/webhook`,
@@ -110,7 +133,7 @@ export async function POST(request: NextRequest) {
       console.error('❌ MAIB payment creation failed:', maibPayment.errors)
       
       // Обновляем статус платежа на failed
-      await supabaseServer
+      await supabaseAdmin
         .from('payments')
         .update({ status: 'failed' })
         .eq('id', payment.id)
@@ -124,7 +147,7 @@ export async function POST(request: NextRequest) {
     console.log('✅ MAIB payment created successfully:', maibPayment.result.payId)
 
     // Обновляем платеж с информацией от MAIB
-    await supabaseServer
+    await supabaseAdmin
       .from('payments')
       .update({
         maib_transaction_id: maibPayment.result.payId,

@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Loader2, CreditCard, Shield, Clock } from 'lucide-react'
 import { motion } from 'framer-motion'
-import { createClient } from '@/lib/supabase-client'
+import { createClient } from '@/lib/supabase/client'
 
 interface PaymentFormProps {
   streamId: string

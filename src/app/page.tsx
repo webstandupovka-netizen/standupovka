@@ -1,76 +1,122 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { createClient } from '@/lib/supabase-client'
+import { createClient } from '@/lib/supabase/client'
 import { useUser } from '@/hooks/useUser'
 import { EventBlock } from '@/components/event-block'
-
-
+import { StreamCard } from '@/components/stream-card'
 
 const supabase = createClient()
 
 export default function Home() {
-  const [isClient, setIsClient] = useState(false)
-  const [streamData, setStreamData] = useState<any>(null)
-  const [hasAccess, setHasAccess] = useState(false)
-  
+  const [upcomingStream, setUpcomingStream] = useState<any>(null)
+  const [archivedStreams, setArchivedStreams] = useState<any[]>([])
+  const [hasAccessToUpcoming, setHasAccessToUpcoming] = useState(false)
+  const [paidStreamIds, setPaidStreamIds] = useState<Set<string>>(new Set())
+
   const { user, profile, loading } = useUser()
   const userId = user?.id
 
-  const fetchStreamData = useCallback(async () => {
+  const fetchStreams = useCallback(async () => {
     try {
-      const { data, error } = await supabase
+      // Ближайшее будущее событие (или текущее live)
+      const { data: upcoming } = await supabase
         .from('stream_settings')
         .select('*')
         .eq('is_active', true)
+        .gte('stream_start_time', new Date().toISOString())
+        .order('stream_start_time', { ascending: true })
+        .limit(1)
         .single()
-      
-      if (data) {
-        setStreamData(data)
+
+      // Если нет будущего — берём текущее live
+      if (!upcoming) {
+        const { data: live } = await supabase
+          .from('stream_settings')
+          .select('*')
+          .eq('is_active', true)
+          .eq('is_live', true)
+          .limit(1)
+          .single()
+
+        if (live) {
+          setUpcomingStream(live)
+        } else {
+          // Берём последнее активное событие (даже если прошло)
+          const { data: latest } = await supabase
+            .from('stream_settings')
+            .select('*')
+            .eq('is_active', true)
+            .order('stream_start_time', { ascending: false })
+            .limit(1)
+            .single()
+
+          setUpcomingStream(latest)
+        }
+      } else {
+        setUpcomingStream(upcoming)
       }
+
+      // Архив — прошедшие события с записями
+      const { data: archived } = await supabase
+        .from('stream_settings')
+        .select('*')
+        .eq('is_active', true)
+        .lt('stream_start_time', new Date().toISOString())
+        .order('stream_start_time', { ascending: false })
+
+      setArchivedStreams(archived || [])
     } catch (error) {
-      console.error('Error fetching stream data:', error)
+      console.error('Error fetching streams:', error)
     }
   }, [])
 
-  const checkUserAccess = useCallback(async () => {
+  const checkAccess = useCallback(async () => {
     if (!userId || !profile) {
-      setHasAccess(false)
+      setHasAccessToUpcoming(false)
+      setPaidStreamIds(new Set())
       return
     }
-    
+
     try {
-      // Проверяем бесплатный доступ пользователя
+      // Бесплатный доступ — ко всему
       if (profile.free_access) {
-        setHasAccess(true)
+        setHasAccessToUpcoming(true)
+        // Для карточек тоже ставим доступ
+        const allIds = new Set(archivedStreams.map(s => s.id))
+        if (upcomingStream) allIds.add(upcomingStream.id)
+        setPaidStreamIds(allIds)
         return
       }
 
-      // Если нет бесплатного доступа, проверяем платежи
-      const { data: payment } = await supabase
+      // Получаем все completed-платежи пользователя
+      const { data: payments } = await supabase
         .from('payments')
-        .select('*')
+        .select('metadata')
         .eq('user_id', userId)
         .eq('status', 'completed')
-        .single()
 
-      setHasAccess(!!payment)
+      const paidIds = new Set<string>()
+      payments?.forEach(p => {
+        if (p.metadata?.stream_id) {
+          paidIds.add(p.metadata.stream_id)
+        }
+      })
+
+      setPaidStreamIds(paidIds)
+      setHasAccessToUpcoming(upcomingStream ? paidIds.has(upcomingStream.id) : false)
     } catch (error) {
       console.error('Error checking access:', error)
-      setHasAccess(false)
     }
-  }, [userId, profile])
+  }, [userId, profile, upcomingStream, archivedStreams])
 
   useEffect(() => {
-    setIsClient(true)
-    fetchStreamData()
-  }, [fetchStreamData])
+    fetchStreams()
+  }, [fetchStreams])
 
   useEffect(() => {
-    checkUserAccess()
-  }, [checkUserAccess])
-
-
+    checkAccess()
+  }, [checkAccess])
 
   if (loading) {
     return (
@@ -83,7 +129,45 @@ export default function Home() {
     )
   }
 
+  function getAccessStatus(streamId: string): 'not_logged_in' | 'no_access' | 'has_access' {
+    if (!userId) return 'not_logged_in'
+    if (profile?.free_access) return 'has_access'
+    if (paidStreamIds.has(streamId)) return 'has_access'
+    return 'no_access'
+  }
+
+  // Фильтруем архив — не показываем upcoming в карточках
+  const archiveCards = archivedStreams.filter(s => s.id !== upcomingStream?.id)
+
   return (
-    <EventBlock user={profile} hasAccess={hasAccess} />
+    <div className="flex flex-col">
+      {/* Hero — ближайшее / текущее событие */}
+      <EventBlock user={profile} hasAccess={hasAccessToUpcoming} streamData={upcomingStream} />
+
+      {/* Архив записей */}
+      {archiveCards.length > 0 && (
+        <section className="bg-black py-12 md:py-20">
+          <div className="w-full max-w-[1200px] mx-auto px-4 md:px-6">
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h2 className="text-white font-bold text-2xl md:text-3xl">
+                  Înregistrări anterioare
+                </h2>
+                <p className="text-white/40 text-sm mt-1">Spectacolele trecute disponibile pentru vizionare</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-5">
+              {archiveCards.map(stream => (
+                <StreamCard
+                  key={stream.id}
+                  stream={stream}
+                  accessStatus={getAccessStatus(stream.id)}
+                />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+    </div>
   )
 }

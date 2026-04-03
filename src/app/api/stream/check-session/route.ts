@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClientAuth } from '@/lib/auth/config'
-import { supabaseServer } from '@/lib/database/client'
+import { createClient as createServerClient } from '@/lib/supabase/server'
+import { supabaseAdmin } from '@/lib/supabase/admin'
 import { z } from 'zod'
 
 const checkSessionSchema = z.object({
@@ -9,10 +9,10 @@ const checkSessionSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createServerClientAuth()
-    const { data: { session } } = await supabase.auth.getSession()
+    const supabase = await createServerClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
-    if (!session) {
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -20,10 +20,10 @@ export async function POST(request: NextRequest) {
     const { deviceFingerprint } = checkSessionSchema.parse(body)
 
     // Получаем активные сессии пользователя
-    const { data: activeSessions, error: sessionsError } = await supabaseServer
+    const { data: activeSessions, error: sessionsError } = await supabaseAdmin
       .from('user_sessions')
       .select('*')
-      .eq('user_id', session.user.id)
+      .eq('user_id', user.id)
       .eq('is_active', true)
       .order('created_at', { ascending: false })
 
@@ -81,18 +81,18 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createServerClientAuth()
-    const { data: { session } } = await supabase.auth.getSession()
+    const supabase = await createServerClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
-    if (!session) {
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     // Получаем все активные сессии пользователя
-    const { data: activeSessions, error: sessionsError } = await supabaseServer
+    const { data: activeSessions, error: sessionsError } = await supabaseAdmin
       .from('user_sessions')
       .select('*')
-      .eq('user_id', session.user.id)
+      .eq('user_id', user.id)
       .eq('is_active', true)
       .order('last_activity', { ascending: false })
 

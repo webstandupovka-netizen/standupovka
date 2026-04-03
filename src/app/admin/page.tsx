@@ -5,8 +5,9 @@ import { createBrowserClient } from '@supabase/ssr'
 import { User } from '@supabase/supabase-js'
 import { useRouter } from 'next/navigation'
 import { Database } from '@/types/database'
-import { StreamManager } from '@/components/admin/stream-manager'
+import { EventEditor } from '@/components/admin/event-editor'
 import { RefundPayment } from '@/components/admin/refund-payment'
+import { Plus, Calendar, Video } from 'lucide-react'
 
 type UserProfile = Database['public']['Tables']['user_profiles']['Row']
 type Payment = Database['public']['Tables']['payments']['Row']
@@ -304,7 +305,7 @@ export default function AdminPage() {
         )}
 
         {activeTab === 'stream' && (
-          <StreamManager streamId="550e8400-e29b-41d4-a716-446655440000" />
+          <StreamManagerList />
         )}
       </div>
 
@@ -552,6 +553,251 @@ function UserDetailsModal({
               <p className="text-gray-400">Нет email уведомлений</p>
             )}
           </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Stream Manager List — список всех событий + создание нового
+function StreamManagerList() {
+  const [streams, setStreams] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [selectedStreamId, setSelectedStreamId] = useState<string | null>(null)
+  const [creating, setCreating] = useState(false)
+  const [newTitle, setNewTitle] = useState('')
+  const [newDescription, setNewDescription] = useState('')
+  const [newDate, setNewDate] = useState('')
+  const [newTime, setNewTime] = useState('19:30')
+  const [newPrice, setNewPrice] = useState('300')
+  const [newPosterUrl, setNewPosterUrl] = useState('')
+  const [uploadingPoster, setUploadingPoster] = useState(false)
+
+  useEffect(() => {
+    fetchStreams()
+  }, [])
+
+  const fetchStreams = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch('/api/admin/streams', {
+        credentials: 'include'
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setStreams(data.streams || [])
+      }
+    } catch (error) {
+      console.error('Error fetching streams:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const createStream = async () => {
+    if (!newTitle || !newDate) return
+
+    try {
+      setCreating(true)
+      const streamStartTime = new Date(`${newDate}T${newTime}:00+03:00`).toISOString()
+
+      const response = await fetch('/api/admin/streams', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          title: newTitle,
+          description: newDescription,
+          stream_start_time: streamStartTime,
+          price: parseFloat(newPrice),
+          currency: 'MDL',
+          is_active: true,
+          is_live: false,
+          poster_url: newPosterUrl || null
+        })
+      })
+
+      if (response.ok) {
+        setNewTitle('')
+        setNewDescription('')
+        setNewDate('')
+        setNewPrice('300')
+        await fetchStreams()
+      }
+    } catch (error) {
+      console.error('Error creating stream:', error)
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  if (selectedStreamId) {
+    return (
+      <div>
+        <EventEditor streamId={selectedStreamId} onBack={() => { setSelectedStreamId(null); fetchStreams() }} />
+      </div>
+    )
+  }
+
+  if (loading) {
+    return <div className="text-white text-center py-8">Загрузка событий...</div>
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Создание нового события */}
+      <div className="bg-gray-900 rounded-lg p-6">
+        <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+          <Plus className="h-5 w-5" />
+          Создать новое событие
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          <div>
+            <label className="text-sm text-gray-400 block mb-1">Название</label>
+            <input
+              type="text"
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              placeholder="Așa, bună seara! - Partea 2"
+              className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+            />
+          </div>
+          <div>
+            <label className="text-sm text-gray-400 block mb-1">Описание</label>
+            <input
+              type="text"
+              value={newDescription}
+              onChange={(e) => setNewDescription(e.target.value)}
+              placeholder="Descrierea evenimentului..."
+              className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500"
+            />
+          </div>
+          <div className="md:col-span-2">
+            <label className="text-sm text-gray-400 block mb-1">Постер события</label>
+            <div className="flex items-center gap-3">
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0]
+                  if (!file) return
+                  setUploadingPoster(true)
+                  try {
+                    const res = await fetch('/api/admin/upload-poster', {
+                      method: 'POST',
+                      headers: { 'Content-Type': file.type, 'X-Filename': file.name },
+                      body: file,
+                      credentials: 'include'
+                    })
+                    const data = await res.json()
+                    if (data.url) setNewPosterUrl(data.url)
+                  } catch (err) {
+                    console.error('Upload error:', err)
+                  } finally {
+                    setUploadingPoster(false)
+                  }
+                }}
+                className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:bg-blue-600 file:text-white file:text-sm file:cursor-pointer"
+              />
+              {uploadingPoster && <span className="text-blue-400 text-sm">Загрузка...</span>}
+            </div>
+            {newPosterUrl && (
+              <div className="mt-2 flex items-center gap-3">
+                <img src={newPosterUrl} alt="Preview" className="h-16 w-16 object-cover rounded-lg" />
+                <span className="text-xs text-gray-400 truncate">{newPosterUrl}</span>
+              </div>
+            )}
+          </div>
+          <div>
+            <label className="text-sm text-gray-400 block mb-1">Дата</label>
+            <input
+              type="date"
+              value={newDate}
+              onChange={(e) => setNewDate(e.target.value)}
+              className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
+            />
+          </div>
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <label className="text-sm text-gray-400 block mb-1">Время</label>
+              <input
+                type="time"
+                value={newTime}
+                onChange={(e) => setNewTime(e.target.value)}
+                className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
+              />
+            </div>
+            <div className="flex-1">
+              <label className="text-sm text-gray-400 block mb-1">Цена (MDL)</label>
+              <input
+                type="number"
+                value={newPrice}
+                onChange={(e) => setNewPrice(e.target.value)}
+                className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:outline-none focus:border-blue-500"
+              />
+            </div>
+          </div>
+        </div>
+        <button
+          onClick={createStream}
+          disabled={creating || !newTitle || !newDate}
+          className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 text-white font-medium py-2 px-6 rounded-lg transition-colors"
+        >
+          {creating ? 'Создание...' : 'Создать событие'}
+        </button>
+      </div>
+
+      {/* Список событий */}
+      <div className="bg-gray-900 rounded-lg overflow-hidden">
+        <div className="p-4 border-b border-gray-800">
+          <h3 className="text-lg font-semibold text-white flex items-center gap-2">
+            <Calendar className="h-5 w-5" />
+            Все события ({streams.length})
+          </h3>
+        </div>
+        <div className="divide-y divide-gray-800">
+          {streams.map((stream) => (
+            <div
+              key={stream.id}
+              className="p-4 hover:bg-gray-800 transition-colors cursor-pointer flex items-center justify-between"
+              onClick={() => setSelectedStreamId(stream.id)}
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 bg-gray-700 rounded-lg overflow-hidden flex-shrink-0">
+                  {stream.poster_url ? (
+                    <img src={stream.poster_url} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-500">
+                      <Video className="h-6 w-6" />
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <h4 className="text-white font-medium">{stream.title}</h4>
+                  <p className="text-gray-400 text-sm">
+                    {new Date(stream.stream_start_time).toLocaleDateString('ro-RO', {
+                      day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
+                    })}
+                  </p>
+                  <div className="flex gap-2 mt-1">
+                    <span className={`text-xs px-2 py-0.5 rounded ${stream.is_live ? 'bg-red-600 text-white' : stream.is_active ? 'bg-green-600/20 text-green-400' : 'bg-gray-600/20 text-gray-400'}`}>
+                      {stream.is_live ? 'LIVE' : stream.is_active ? 'Activ' : 'Inactiv'}
+                    </span>
+                    {(stream.cf_video_id || stream.recorded_video_url) && (
+                      <span className="text-xs px-2 py-0.5 rounded bg-blue-600/20 text-blue-400">Înregistrare</span>
+                    )}
+                    <span className="text-xs text-gray-500">{stream.price} {stream.currency}</span>
+                  </div>
+                </div>
+              </div>
+              <span className="text-gray-500 text-sm">→</span>
+            </div>
+          ))}
+          {streams.length === 0 && (
+            <div className="p-8 text-center text-gray-500">
+              Нет событий. Создайте первое выше.
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -18,10 +18,53 @@ const magicLinkSchema = z.object({
   }).optional()
 })
 
+// Rate limiting: максимум 3 запроса на email за 15 минут
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
+const RATE_LIMIT_MAX = 3
+const RATE_LIMIT_WINDOW_MS = 15 * 60 * 1000 // 15 минут
+
+function checkRateLimit(email: string): { allowed: boolean; retryAfterSeconds?: number } {
+  const now = Date.now()
+  const key = email.toLowerCase()
+  const entry = rateLimitMap.get(key)
+
+  if (!entry || now >= entry.resetAt) {
+    rateLimitMap.set(key, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS })
+    return { allowed: true }
+  }
+
+  if (entry.count >= RATE_LIMIT_MAX) {
+    const retryAfterSeconds = Math.ceil((entry.resetAt - now) / 1000)
+    return { allowed: false, retryAfterSeconds }
+  }
+
+  entry.count++
+  return { allowed: true }
+}
+
+// Периодическая очистка устаревших записей (каждые 5 минут)
+setInterval(() => {
+  const now = Date.now()
+  for (const [key, entry] of rateLimitMap) {
+    if (now >= entry.resetAt) {
+      rateLimitMap.delete(key)
+    }
+  }
+}, 5 * 60 * 1000)
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const { email, redirectTo, data } = magicLinkSchema.parse(body)
+
+    // Проверяем rate limit
+    const { allowed, retryAfterSeconds } = checkRateLimit(email)
+    if (!allowed) {
+      return NextResponse.json(
+        { error: `Prea multe încercări. Încercați din nou după ${retryAfterSeconds} secunde.` },
+        { status: 429 }
+      )
+    }
 
     // Генерируем magic link через Supabase
     const { data: authData, error: authError } = await supabase.auth.admin.generateLink({
@@ -69,7 +112,7 @@ export async function POST(request: NextRequest) {
 
   } catch (error) {
     console.error('Magic link API error:', error)
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: 'Неверные данные запроса', details: error.issues },

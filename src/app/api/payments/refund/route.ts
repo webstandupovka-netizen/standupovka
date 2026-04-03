@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClientAuth } from '@/lib/auth/config'
+import { createClient as createServerClient } from '@/lib/supabase/server'
 import { MAIBPaymentService } from '@/lib/payments/maib'
-import { supabaseServer } from '@/lib/database/client'
+import { supabaseAdmin } from '@/lib/supabase/admin'
 import { z } from 'zod'
 
 const refundSchema = z.object({
@@ -11,10 +11,10 @@ const refundSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createServerClientAuth()
-    const { data: { session } } = await supabase.auth.getSession()
+    const supabase = await createServerClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
-    if (!session) {
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -22,11 +22,11 @@ export async function POST(request: NextRequest) {
     const { paymentId, refundAmount } = refundSchema.parse(body)
 
     // Получаем платеж из базы данных
-    const { data: payment, error: paymentError } = await supabaseServer
+    const { data: payment, error: paymentError } = await supabaseAdmin
       .from('payments')
       .select('*')
       .eq('id', paymentId)
-      .eq('user_id', session.user.id)
+      .eq('user_id', user.id)
       .eq('status', 'completed')
       .single()
 
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
     const actualRefundAmount = refundResult.result.refundAmount
 
     // Обновляем платеж в базе данных
-    const { data: updatedPayment, error: updateError } = await supabaseServer
+    const { data: updatedPayment, error: updateError } = await supabaseAdmin
       .from('payments')
       .update({
         status: isFullRefund ? 'refunded' : 'completed',

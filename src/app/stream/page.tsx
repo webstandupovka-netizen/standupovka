@@ -2,14 +2,12 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase-client'
-import { VideoPlayer } from '@/components/video/video-player'
-import YouTubePlayer from '@/components/video/YouTubePlayer'
-import SecureVideoPlayer from '@/components/video/SecureVideoPlayer'
+import { createClient } from '@/lib/supabase/client'
+import { StreamPlayer } from '@/components/video/stream-player'
+import { useStreamSession } from '@/hooks/useStreamSession'
 import { StreamCountdown } from '@/components/stream/stream-countdown'
 import { CloseStreamButton } from '@/components/stream/close-stream-button'
 import { UserStatus } from '@/components/auth/user-status'
-import { StreamSessionManager } from '@/components/stream/stream-session-manager'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -27,6 +25,8 @@ interface StreamData {
   castr_stream_key?: string
   castr_playback_url?: string
   recorded_video_url?: string
+  cf_input_id?: string
+  cf_video_id?: string
   stream_start_time: string
   stream_end_time?: string
   poster_url?: string
@@ -48,12 +48,14 @@ export default function StreamPage() {
   const [payment, setPayment] = useState<PaymentData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [isPlaying, setIsPlaying] = useState(false)
   const [canStream, setCanStream] = useState(false)
   const [session, setSession] = useState<any>(null)
-  
+
   const router = useRouter()
   const supabase = createClient()
+
+  // Heartbeat — ограничение одного устройства
+  const streamSession = useStreamSession(canStream && stream ? stream.id : null)
 
   useEffect(() => {
     const checkAccessAndLoadStream = async () => {
@@ -76,23 +78,26 @@ export default function StreamPage() {
           .eq('id', session.user.id)
           .single()
 
-        let streamId: string | null = null
+        const urlParams = new URLSearchParams(window.location.search)
+        let streamId: string | null = urlParams.get('stream_id') || '550e8400-e29b-41d4-a716-446655440000'
         let hasAccess = false
 
         // Если у пользователя есть бесплатный доступ
         if (userProfile?.free_access) {
           hasAccess = true
-          // Получаем ID стрима из URL или используем дефолтный
-          const urlParams = new URLSearchParams(window.location.search)
-          streamId = urlParams.get('stream_id') || '550e8400-e29b-41d4-a716-446655440000'
         } else {
-          // Проверяем оплату для пользователей без бесплатного доступа
-          const { data: paymentData, error: paymentError } = await supabase
+          // Проверяем оплату для конкретного стрима
+          let paymentQuery = supabase
             .from('payments')
             .select('*')
             .eq('user_id', session.user.id)
             .eq('status', 'completed')
-            .single()
+
+          if (streamId) {
+            paymentQuery = paymentQuery.contains('metadata', { stream_id: streamId })
+          }
+
+          const { data: paymentData, error: paymentError } = await paymentQuery.single()
 
           if (paymentError || !paymentData) {
             router.push('/?error=payment_required')
@@ -100,7 +105,7 @@ export default function StreamPage() {
           }
 
           setPayment(paymentData)
-          streamId = paymentData.metadata?.stream_id
+          streamId = paymentData.metadata?.stream_id || streamId
           hasAccess = true
         }
 
@@ -132,6 +137,13 @@ export default function StreamPage() {
 
     checkAccessAndLoadStream()
   }, [router, supabase])
+
+  // Старт heartbeat-сессии когда доступ подтверждён
+  useEffect(() => {
+    if (canStream && stream && streamSession.status === 'idle') {
+      streamSession.startSession()
+    }
+  }, [canStream, stream, streamSession.status])
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString('ro-RO', {
@@ -316,104 +328,61 @@ export default function StreamPage() {
             {/* Video Container */}
             <div className="relative bg-black rounded-xl md:rounded-2xl overflow-hidden border border-[#333333] shadow-2xl">
               <div className="aspect-video bg-gradient-to-br from-black via-[#111111] to-black">
-                {canStream ? (
-                  // Если стрим активен и есть live URL - показываем live
-                  stream.is_live && (stream.castr_playback_url || stream.castr_embed_url) ? (
-                    stream.castr_playback_url ? (
-                      stream.castr_playback_url.includes('player.castr.com') ? (
-                        <iframe
-                          src={stream.castr_playback_url}
-                          className="w-full h-full rounded-2xl"
-                          frameBorder="0"
-                          allow="autoplay; fullscreen; picture-in-picture"
-                          allowFullScreen
-                          title={stream.title}
-                        />
-                      ) : (
-                        <VideoPlayer
-                          type="hls"
-                          src={stream.castr_playback_url}
-                          poster={stream.poster_url}
-                          onPlay={() => setIsPlaying(true)}
-                          onPause={() => setIsPlaying(false)}
-                          className="w-full h-full rounded-2xl"
-                        />
-                      )
-                    ) : (
-                      <iframe
-                        src={stream.castr_embed_url!}
-                        className="w-full h-full rounded-2xl"
-                        frameBorder="0"
-                        allow="autoplay; fullscreen; picture-in-picture"
-                        allowFullScreen
-                        title={stream.title}
-                      />
-                    )
-                  ) : // Если стрим не активен, но есть запись - показываем защищенный плеер
-                  stream.recorded_video_url ? (
-                    <SecureVideoPlayer
-                       src={stream.recorded_video_url}
-                       title={stream.title}
-                       userEmail={session?.user?.email}
-                       className="w-full h-full rounded-2xl"
-                       poster={stream.poster_url}
-                     />
-                  ) : // Иначе показываем countdown или подготовку
-                  stream.castr_playback_url || stream.castr_embed_url ? (
-                    <StreamCountdown 
+                {canStream && streamSession.status === 'active' ? (
+                  stream.is_live ? (
+                    <StreamPlayer
+                      streamId={stream.id}
+                      isLive
+                      liveEmbedUrl={stream.castr_playback_url || stream.castr_embed_url}
+                      poster={stream.poster_url}
+                      className="w-full h-full rounded-2xl"
+                    />
+                  ) : (stream.cf_video_id || stream.recorded_video_url) ? (
+                    <StreamPlayer
+                      streamId={stream.id}
+                      poster={stream.poster_url}
+                      className="w-full h-full rounded-2xl"
+                    />
+                  ) : (
+                    <StreamCountdown
                       streamStartTime={stream.stream_start_time}
                       streamTitle={stream.title}
                       className="w-full h-full rounded-2xl"
                     />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#111111] to-black rounded-2xl">
-                      <div className="text-center text-[#F2F2F2] p-4 md:p-8 max-w-md mx-auto">
-                        <div className="relative mb-4 md:mb-6">
-                          <div className="absolute inset-0 bg-[#10C23F]/20 rounded-full blur-xl" />
-                          <Play className="h-12 w-12 md:h-20 md:w-20 mx-auto text-[#10C23F] relative z-10" />
-                        </div>
-                        <h3 className="text-lg md:text-2xl font-bold mb-2 leading-tight">Pregătire pentru transmisie</h3>
-                        <p className="text-[#CCCCCC] text-sm md:text-lg leading-relaxed">Verificați statusul sesiunii de mai sus pentru a începe vizionarea</p>
-                      </div>
-                    </div>
                   )
+                ) : streamSession.status === 'blocked' ? (
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#111111] to-black rounded-2xl">
+                    <div className="text-center p-4 md:p-8 max-w-md mx-auto">
+                      <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <Users className="h-8 w-8 text-red-400" />
+                      </div>
+                      <h3 className="text-white text-lg md:text-xl font-bold mb-2">Sesiune activă pe alt dispozitiv</h3>
+                      <p className="text-white/50 text-sm mb-6">{streamSession.error}</p>
+                      <button
+                        onClick={() => streamSession.startSession()}
+                        className="bg-white text-black font-semibold px-6 py-2.5 rounded-full text-sm hover:bg-white/90 transition-all cursor-pointer"
+                      >
+                        Încearcă din nou
+                      </button>
+                    </div>
+                  </div>
+                ) : streamSession.status === 'starting' ? (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <Loader2 className="h-10 w-10 animate-spin text-white/50" />
+                  </div>
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#111111] to-black">
+                  <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#111111] to-black rounded-2xl">
                     <div className="text-center text-[#F2F2F2] p-4 md:p-8 max-w-md mx-auto">
                       <div className="relative mb-4 md:mb-6">
                         <div className="absolute inset-0 bg-[#10C23F]/20 rounded-full blur-xl" />
                         <Play className="h-12 w-12 md:h-20 md:w-20 mx-auto text-[#10C23F] relative z-10" />
                       </div>
                       <h3 className="text-lg md:text-2xl font-bold mb-2 leading-tight">Pregătire pentru transmisie</h3>
-                      <p className="text-[#CCCCCC] text-sm md:text-lg leading-relaxed">Verificați statusul sesiunii de mai sus pentru a începe vizionarea</p>
+                      <p className="text-[#CCCCCC] text-sm md:text-lg leading-relaxed">Se pregătește sesiunea de vizionare...</p>
                     </div>
                   </div>
                 )}
               </div>
-              
-              {/* Video Overlay Info */}
-              {canStream && (
-                <div className="absolute top-3 md:top-4 left-3 md:left-4 flex items-center gap-2 md:gap-3 flex-wrap">
-                  <div className={`flex items-center gap-1 md:gap-2 px-2 md:px-3 py-1 md:py-1.5 rounded-full text-xs md:text-sm font-medium backdrop-blur-md ${
-                    stream.is_live 
-                      ? 'bg-[#D61515]/90 text-white' 
-                      : 'bg-black/70 text-[#CCCCCC]'
-                  }`}>
-                    <div className={`h-1.5 w-1.5 md:h-2 md:w-2 rounded-full ${
-                      stream.is_live ? 'bg-white animate-pulse' : 'bg-[#666666]'
-                    }`} />
-                    {stream.is_live ? 'LIVE' : 'OFFLINE'}
-                  </div>
-                  
-                  {isPlaying && (
-                    <div className="flex items-center gap-1 md:gap-2 px-2 md:px-3 py-1 md:py-1.5 rounded-full text-xs md:text-sm font-medium bg-[#10C23F]/90 text-white backdrop-blur-md">
-                      <div className="h-1.5 w-1.5 md:h-2 md:w-2 bg-white rounded-full animate-pulse" />
-                      <span className="hidden sm:inline">În redare</span>
-                      <span className="sm:hidden">Play</span>
-                    </div>
-                  )}
-                </div>
-              )}
             </div>
           </motion.div>
         </div>

@@ -3,7 +3,7 @@ import { getAdminFromRequest } from '@/lib/auth/admin-auth'
 
 export async function GET(request: NextRequest) {
   try {
-    const admin = getAdminFromRequest(request)
+    const admin = await getAdminFromRequest(request)
     
     if (!admin) {
       return NextResponse.json(

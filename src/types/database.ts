@@ -69,6 +69,8 @@ export interface UserSession {
   user_agent?: string
   is_active: boolean
   last_activity: string
+  heartbeat_at?: string
+  stream_id?: string
   expires_at?: string
   created_at: string
 }
@@ -88,6 +90,8 @@ export interface StreamSettings {
   castr_playback_url?: string
   poster_url?: string
   recorded_video_url?: string
+  cf_input_id?: string
+  cf_video_id?: string
   stream_start_time: string
   stream_end_time?: string
   price: number

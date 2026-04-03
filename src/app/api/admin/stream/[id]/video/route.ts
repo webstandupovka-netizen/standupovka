@@ -10,10 +10,9 @@ const supabase = createClient(
 // Функция для проверки админских прав
 async function checkAdminAccess(request: NextRequest) {
   // Проверяем admin-token cookie
-  const admin = getAdminFromRequest(request)
-  
+  const admin = await getAdminFromRequest(request)
+
   if (!admin) {
-    console.log('Admin access denied: no valid token')
     return false
   }
 
@@ -30,7 +29,6 @@ async function checkAdminAccess(request: NextRequest) {
     return false
   }
 
-  console.log('Admin access granted for:', admin.username)
   return true
 }
 

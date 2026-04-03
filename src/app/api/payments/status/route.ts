@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClientAuth } from '@/lib/auth/config'
+import { createClient as createServerClient } from '@/lib/supabase/server'
 import { MAIBPaymentService } from '@/lib/payments/maib'
-import { supabaseServer } from '@/lib/database/client'
+import { supabaseAdmin } from '@/lib/supabase/admin'
 import { z } from 'zod'
 
 const statusSchema = z.object({
@@ -11,10 +11,10 @@ const statusSchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createServerClientAuth()
-    const { data: { session } } = await supabase.auth.getSession()
+    const supabase = await createServerClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
-    if (!session) {
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -32,10 +32,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Получаем платеж из базы данных
-    let query = supabaseServer
+    let query = supabaseAdmin
       .from('payments')
       .select('*')
-      .eq('user_id', session.user.id)
+      .eq('user_id', user.id)
 
     if (validatedPaymentId) {
       query = query.eq('maib_transaction_id', validatedPaymentId)
@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
         // Обновляем статус в базе данных, если он изменился
         if (maibStatus.status !== payment.status) {
           console.log(`🔄 Status changed: ${payment.status} → ${maibStatus.status}`)
-          const { error: updateError } = await supabaseServer
+          const { error: updateError } = await supabaseAdmin
             .from('payments')
             .update({
               status: maibStatus.status,

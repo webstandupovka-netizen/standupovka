@@ -1,112 +1,116 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { MAIBPaymentService } from '@/lib/payments/maib'
-import { supabaseServer } from '@/lib/database/client'
+import { supabaseAdmin } from '@/lib/supabase/admin'
 import { emailService } from '@/lib/email/service'
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('=== MAIB Webhook received ===');
-    console.log('Headers:', Object.fromEntries(request.headers.entries()));
-    
     const body = await request.text()
-    console.log('Body:', body);
-    
     const signature = request.headers.get('x-maib-signature')
-    console.log('Signature:', signature);
 
     if (!signature) {
-      console.log('❌ Missing signature');
       return NextResponse.json({ error: 'Missing signature' }, { status: 400 })
     }
 
     const maibService = new MAIBPaymentService()
-    
-    // Проверяем подпись webhook
     const isValid = maibService.validateWebhookSignature(body, signature)
-    console.log('Signature valid:', isValid);
-    
+
     if (!isValid) {
-      console.log('❌ Invalid signature');
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
     }
 
-    // Парсим данные webhook
     const webhookData = JSON.parse(body)
-    console.log('Webhook data:', JSON.stringify(webhookData, null, 2));
-    
     const paymentDetails = maibService.processWebhook(webhookData)
-    console.log('Processed payment details:', JSON.stringify(paymentDetails, null, 2));
 
-    // Обновляем статус платежа в базе данных
-    console.log(`Updating payment with orderId: ${paymentDetails.orderId} to status: ${paymentDetails.status}`);
-    
-    const { data: updatedPayment, error: updateError } = await supabaseServer
+    // Idempotency: проверяем текущий статус перед обновлением
+    const { data: existingPayment } = await supabaseAdmin
+      .from('payments')
+      .select('id, status, metadata')
+      .eq('maib_order_id', paymentDetails.orderId)
+      .single()
+
+    if (!existingPayment) {
+      return NextResponse.json({ error: 'Payment not found' }, { status: 404 })
+    }
+
+    // Если уже обработан с тем же статусом — возвращаем OK без повторной обработки
+    if (existingPayment.status === paymentDetails.status && existingPayment.metadata?.webhook_processed_at) {
+      return NextResponse.json({ success: true, message: 'Already processed' })
+    }
+
+    // Если уже completed — не откатываем на pending/processing
+    if (existingPayment.status === 'completed' && paymentDetails.status !== 'refunded') {
+      return NextResponse.json({ success: true, message: 'Already completed' })
+    }
+
+    // Обновляем платёж
+    const { error: updateError } = await supabaseAdmin
       .from('payments')
       .update({
         status: paymentDetails.status,
         maib_transaction_id: paymentDetails.payId,
         updated_at: new Date().toISOString(),
         metadata: {
+          ...existingPayment.metadata,
           ...paymentDetails.metadata,
-          webhook_received_at: new Date().toISOString(),
+          webhook_processed_at: new Date().toISOString(),
           rrn: paymentDetails.rrn,
           approval_code: paymentDetails.approvalCode
         }
       })
-      .eq('maib_order_id', paymentDetails.orderId)
-      .select()
-      .single()
+      .eq('id', existingPayment.id)
 
     if (updateError) {
-      console.error('❌ Failed to update payment:', updateError)
+      console.error('Failed to update payment:', updateError)
       return NextResponse.json({ error: 'Failed to update payment' }, { status: 500 })
     }
-    
-    console.log('✅ Payment updated successfully:', updatedPayment);
 
-    // Если платеж успешен, отправляем email уведомление
-    if (paymentDetails.status === 'completed') {
+    // Отправляем email только при первом completed
+    if (paymentDetails.status === 'completed' && existingPayment.status !== 'completed') {
       try {
-        // Получаем информацию о платеже и пользователе
-        const { data: payment } = await supabaseServer
+        const { data: payment } = await supabaseAdmin
           .from('payments')
-          .select(`
-            *,
-            user_profiles!inner(full_name, email)
-          `)
-          .eq('maib_order_id', paymentDetails.orderId)
+          .select(`*, user_profiles!inner(full_name, email)`)
+          .eq('id', existingPayment.id)
           .single()
 
-        if (payment && payment.user_profiles.email) {
-          const userFirstname = payment.user_profiles.full_name?.split(' ')[0] || 'Пользователь'
-          
-          // Отправляем email уведомление
-          console.log(`📧 Sending payment success email to: ${payment.user_profiles.email}`);
-          
+        if (payment?.user_profiles?.email) {
+          // Получаем данные стрима для даты/времени
+          let streamDate = ''
+          let streamTime = ''
+          if (payment.metadata?.stream_id) {
+            const { data: stream } = await supabaseAdmin
+              .from('stream_settings')
+              .select('stream_start_time')
+              .eq('id', payment.metadata.stream_id)
+              .single()
+
+            if (stream?.stream_start_time) {
+              const d = new Date(stream.stream_start_time)
+              streamDate = d.toLocaleDateString('ro-RO', { day: 'numeric', month: 'long', year: 'numeric' })
+              streamTime = d.toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' })
+            }
+          }
+
           await emailService.sendPaymentSuccessEmail({
             userEmail: payment.user_profiles.email,
-            userFirstname,
-            streamTitle: payment.metadata?.stream_title || 'Стендап Вечер',
-            streamDate: '21 сентября 2025',
-            streamTime: '20:00',
+            userFirstname: payment.user_profiles.full_name?.split(' ')[0] || 'Utilizator',
+            streamTitle: payment.metadata?.stream_title || 'Transmisiune',
+            streamDate,
+            streamTime,
             amount: payment.amount,
             currency: payment.currency,
             userId: payment.user_id
           })
-          
-          console.log(`✅ Payment completed and email sent for order: ${paymentDetails.orderId}`)
         }
       } catch (emailError) {
-        console.error('❌ Failed to send payment success email:', emailError)
-        // Не прерываем обработку webhook из-за ошибки email
+        console.error('Failed to send payment email:', emailError)
       }
     }
 
-    console.log('✅ Webhook processed successfully');
     return NextResponse.json({ success: true })
-
   } catch (error) {
-    console.error('❌ Webhook processing error:', error)
+    console.error('Webhook error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

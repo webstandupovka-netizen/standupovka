@@ -9,7 +9,7 @@ import { useUser } from '@/hooks/useUser'
 import { Star, Users, Calendar, MapPin, Instagram, Facebook, Youtube, Play, Ticket } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { createClient } from '@/lib/supabase-client'
+import { createClient } from '@/lib/supabase/client'
 
 // Datele comedianților
 const comedians = [
@@ -92,6 +92,7 @@ export default function ComediansPage() {
         .select('*')
         .eq('user_id', user.id)
         .eq('status', 'completed')
+        .contains('metadata', { stream_id: '550e8400-e29b-41d4-a716-446655440000' })
         .single()
 
       setHasAccess(!!payment)

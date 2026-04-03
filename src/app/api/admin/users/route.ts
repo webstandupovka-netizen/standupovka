@@ -7,15 +7,10 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
-console.log('Supabase client initialized:', {
-  url: process.env.NEXT_PUBLIC_SUPABASE_URL,
-  hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY
-})
-
 export async function GET(request: NextRequest) {
   try {
     // Проверяем аутентификацию админа
-    const admin = getAdminFromRequest(request)
+    const admin = await getAdminFromRequest(request)
     
     if (!admin) {
       return NextResponse.json(
@@ -23,8 +18,6 @@ export async function GET(request: NextRequest) {
         { status: 401 }
       )
     }
-
-    console.log('Admin authenticated:', admin)
 
     // Получаем всех пользователей
     const { data: usersData, error: usersError } = await supabase
@@ -65,12 +58,6 @@ export async function GET(request: NextRequest) {
         { status: 500 }
       )
     }
-
-    console.log('Data fetched successfully:', {
-      users: usersData?.length || 0,
-      payments: paymentsData?.length || 0,
-      emailLogs: emailLogsData?.length || 0
-    })
 
     // Обрабатываем данные и добавляем статистику
     const processedUsers = usersData.map((user: any) => {

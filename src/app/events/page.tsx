@@ -9,7 +9,7 @@ import { useUser } from '@/hooks/useUser'
 import { Calendar, Clock, MapPin, Users, Star, Ticket, ArrowRight, Play } from 'lucide-react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { createClient } from '@/lib/supabase-client'
+import { createClient } from '@/lib/supabase/client'
 
 // Данные мероприятий
 const events = [
@@ -49,6 +49,7 @@ export default function EventsPage() {
         .select('*')
         .eq('user_id', user.id)
         .eq('status', 'completed')
+        .contains('metadata', { stream_id: '550e8400-e29b-41d4-a716-446655440000' })
         .single()
 
       setHasAccess(!!payment)

@@ -1,7 +1,7 @@
 import { render } from '@react-email/render'
 import { PaymentSuccessEmail } from '@/emails/payment-success-email'
 import { MagicLinkEmail } from '@/emails/magic-link-email'
-import { supabaseServer } from '@/lib/database/client'
+import { supabaseAdmin } from '@/lib/supabase/admin'
 import nodemailer from 'nodemailer'
 
 interface EmailServiceConfig {
@@ -163,7 +163,7 @@ class EmailService {
     metadata?: Record<string, any>
   }) {
     try {
-      await supabaseServer
+      await supabaseAdmin
         .from('email_logs')
         .insert({
           user_id: userId,

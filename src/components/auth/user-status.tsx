@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { User, LogOut, Loader2, CheckCircle, XCircle } from 'lucide-react'
 import { useState, useEffect, useCallback } from 'react'
-import { createClient } from '@/lib/auth/client-config'
+import { createClient } from '@/lib/supabase/client'
 
 interface UserStatusProps {
   showDetails?: boolean

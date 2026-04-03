@@ -2,160 +2,170 @@
 
 import Link from 'next/link'
 import { useState, useEffect } from 'react'
-import { Navbar } from './navbar'
 import { UserProfile } from '@/types/database'
 
 interface EventBlockProps {
   user: UserProfile | null
   hasAccess: boolean
+  streamData: {
+    id: string
+    title: string
+    description?: string
+    price: number
+    currency: string
+    stream_start_time: string
+    poster_url?: string
+  } | null
 }
 
-function CountdownTimer() {
-  const [timeLeft, setTimeLeft] = useState({
-    days: 0,
-    hours: 0,
-    minutes: 0,
-    seconds: 0
-  })
+function CountdownTimer({ targetDate }: { targetDate: string }) {
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 })
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
-    const calculateTimeLeft = () => {
-      // Дата события: 21 сентября 2025, 19:30 (Moldova timezone)
-      const eventDate = new Date('2025-09-21T19:30:00+03:00')
-      const now = new Date()
-      const difference = eventDate.getTime() - now.getTime()
-
-      if (difference > 0) {
-        const days = Math.floor(difference / (1000 * 60 * 60 * 24))
-        const hours = Math.floor((difference % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
-        const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60))
-        const seconds = Math.floor((difference % (1000 * 60)) / 1000)
-
-        return { days, hours, minutes, seconds }
+    setMounted(true)
+    const calc = () => {
+      const diff = new Date(targetDate).getTime() - Date.now()
+      if (diff <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0 }
+      return {
+        days: Math.floor(diff / 86400000),
+        hours: Math.floor((diff % 86400000) / 3600000),
+        minutes: Math.floor((diff % 3600000) / 60000),
+        seconds: Math.floor((diff % 60000) / 1000)
       }
-
-      return { days: 0, hours: 0, minutes: 0, seconds: 0 }
     }
-
-    // Инициализируем сразу
-    setTimeLeft(calculateTimeLeft())
-
-    const timer = setInterval(() => {
-      setTimeLeft(calculateTimeLeft())
-    }, 1000)
-
+    setTimeLeft(calc())
+    const timer = setInterval(() => setTimeLeft(calc()), 1000)
     return () => clearInterval(timer)
-  }, [])
+  }, [targetDate])
+
+  if (!mounted) return null
+
+  const isExpired = timeLeft.days === 0 && timeLeft.hours === 0 && timeLeft.minutes === 0 && timeLeft.seconds === 0
+
+  if (isExpired) return null
 
   return (
-    <div className="flex gap-2 md:gap-4">
-      <div className="border border-gray-600 rounded-xl p-2 md:p-4 flex flex-col items-center justify-center min-w-[60px] md:min-w-[80px]">
-        <span className="text-gray-200 font-bold text-lg md:text-2xl leading-none">{timeLeft.days}</span>
-        <span className="text-gray-200 text-xs mt-1">zile</span>
-      </div>
-      <div className="border border-gray-600 rounded-xl p-2 md:p-4 flex flex-col items-center justify-center min-w-[60px] md:min-w-[80px]">
-        <span className="text-gray-200 font-bold text-lg md:text-2xl leading-none">{timeLeft.hours}</span>
-        <span className="text-gray-200 text-xs mt-1">ore</span>
-      </div>
-      <div className="border border-gray-600 rounded-xl p-2 md:p-4 flex flex-col items-center justify-center min-w-[60px] md:min-w-[80px]">
-        <span className="text-gray-200 font-bold text-lg md:text-2xl leading-none">{timeLeft.minutes}</span>
-        <span className="text-gray-200 text-xs mt-1">minute</span>
-      </div>
-      <div className="border border-gray-600 rounded-xl p-2 md:p-4 flex flex-col items-center justify-center min-w-[60px] md:min-w-[80px]">
-        <span className="text-gray-200 font-bold text-lg md:text-2xl leading-none">{timeLeft.seconds}</span>
-        <span className="text-gray-200 text-xs mt-1">secunde</span>
-      </div>
+    <div className="inline-flex items-center gap-1.5 bg-white/[0.07] backdrop-blur-sm rounded-full px-5 py-2.5 border border-white/[0.08]">
+      <span className="text-white/40 text-xs uppercase tracking-wider mr-1">Începe în</span>
+      {[
+        { value: timeLeft.days, label: 'z' },
+        { value: timeLeft.hours, label: 'h' },
+        { value: timeLeft.minutes, label: 'm' },
+        { value: timeLeft.seconds, label: 's' }
+      ].map(({ value, label }, i) => (
+        <span key={label} className="flex items-baseline">
+          {i > 0 && <span className="text-white/20 mx-1">:</span>}
+          <span className="text-white font-bold text-lg md:text-xl tabular-nums">{String(value).padStart(2, '0')}</span>
+          <span className="text-white/30 text-[10px] ml-0.5">{label}</span>
+        </span>
+      ))}
     </div>
   )
 }
 
-export function EventBlock({ user, hasAccess }: EventBlockProps) {
+function formatEventDate(dateString: string) {
+  const date = new Date(dateString)
+  return {
+    day: date.toLocaleDateString('ro-RO', { day: 'numeric', month: 'long' }),
+    time: date.toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' }),
+    weekday: date.toLocaleDateString('ro-RO', { weekday: 'long' })
+  }
+}
+
+export function EventBlock({ user, hasAccess, streamData }: EventBlockProps) {
+  if (!streamData) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-white/60 text-lg">Nu există evenimente active</p>
+          <p className="text-white/30 text-sm mt-2">Reveniți mai târziu</p>
+        </div>
+      </div>
+    )
+  }
+
+  const { day, time, weekday } = formatEventDate(streamData.stream_start_time)
+  const posterSrc = streamData.poster_url || '/event_poster.jpg'
+
   return (
-    <div className="flex flex-col">
-      {/* Main Content */}
-       <main className="flex justify-center py-8 md:py-16">
-         <div className="w-full max-w-[1200px] flex flex-col lg:flex-row gap-6 md:gap-8 px-4 md:px-6">
-        {/* Left Content */}
-        <div className="flex-1 space-y-6 md:space-y-8">
-          {/* Date and Time Block */}
-          <div className="bg-blue-600 rounded-xl p-3 flex items-center gap-2 md:gap-3 w-fit">
-            <img src="/calendar.svg" alt="Calendar" className="w-5 h-5 md:w-6 md:h-6" />
-            <span className="text-gray-200 font-bold text-xs md:text-sm">21 Septembrie</span>
-            <div className="w-px h-4 md:h-5 bg-gray-200"></div>
-            <span className="text-gray-200 font-bold text-base md:text-lg">19:30</span>
-          </div>
+    <section className="relative min-h-[85vh] md:min-h-[90vh] flex items-end overflow-hidden">
+      {/* Background poster — full bleed with Ken Burns effect */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={posterSrc}
+        alt=""
+        className="absolute inset-0 w-full h-full object-cover animate-ken-burns"
+      />
 
-          {/* Title Container */}
-          <div className="space-y-4">
-            <h1 className="text-white font-black text-2xl md:text-4xl lg:text-5xl leading-tight uppercase">
-              așa, bună seara!
-            </h1>
-            <div className="max-w-lg">
-              <p className="text-gray-200 text-sm md:text-base leading-relaxed">
-                Show-ul tău preferat revine la Arena pentru că data trecută s-a lăsat cu scandal și băieții nu au încă răspuns la întrebarea: "Cine este campionul ABS?"
-              </p>
-            </div>
-          </div>
+      {/* Gradient overlays */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-black/20" />
+      <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/30 to-transparent" />
 
-          {/* Countdown Container */}
-          <div className="space-y-3 md:space-y-4">
-            <h3 className="text-gray-200 font-bold text-sm md:text-base uppercase">
-              Până la începutul evenimentului:
-            </h3>
-            <CountdownTimer />
-          </div>
-
-          {/* CTA Button */}
-          <div>
-            {hasAccess ? (
-              <Link href="/stream">
-                <div className="bg-green-600 hover:bg-green-700 rounded-xl p-3 md:p-4 flex items-center gap-2 md:gap-3 w-fit cursor-pointer transition-all duration-200">
-                  <img src="/live-icon.svg" alt="Play" className="w-5 h-5 md:w-6 md:h-6" />
-                  <span className="text-white font-bold text-sm md:text-base uppercase">vizionați streamul</span>
-                </div>
-              </Link>
-            ) : user?.free_access ? (
-              <Link href="/stream">
-                <div className="bg-blue-600 hover:bg-blue-700 rounded-xl p-3 md:p-4 flex items-center gap-2 md:gap-3 w-fit cursor-pointer transition-all duration-200">
-                  <img src="/live-icon.svg" alt="Play" className="w-5 h-5 md:w-6 md:h-6" />
-                  <span className="text-white font-bold text-sm md:text-base uppercase">vizionați gratuit</span>
-                </div>
-              </Link>
-            ) : user && !user.free_access ? (
-              <Link href="/buy?streamId=550e8400-e29b-41d4-a716-446655440000">
-                <div className="bg-red-600 hover:bg-red-700 rounded-xl p-3 md:p-4 flex items-center gap-2 md:gap-3 w-fit cursor-pointer transition-all duration-200">
-                  <img src="/ticket-icon.svg" alt="Ticket" className="w-5 h-5 md:w-6 md:h-6" />
-                  <span className="text-white font-bold text-sm md:text-base uppercase">live bilet</span>
-                  <div className="bg-white text-red-600 px-2 py-1 md:px-3 md:py-2 rounded-xl">
-                    <span className="font-bold text-xs md:text-sm uppercase">300 mdl</span>
-                  </div>
-                </div>
-              </Link>
-            ) : (
-              <Link href="/auth/login">
-                <div className="bg-blue-600 hover:bg-blue-700 rounded-xl p-3 md:p-4 flex items-center gap-2 md:gap-3 w-fit cursor-pointer transition-all duration-200">
-                  <img src="/live-icon.svg" alt="Login" className="w-5 h-5 md:w-6 md:h-6" />
-                  <span className="text-white font-bold text-sm md:text-base uppercase">Privește Așa, Bună Seara - Revanșa</span>
-                </div>
-              </Link>
-            )}
-          </div>
+      {/* Content */}
+      <div className="relative z-10 w-full max-w-[1200px] mx-auto px-4 md:px-6 pb-14 md:pb-24 pt-32" style={{ textShadow: '0 2px 20px rgba(0,0,0,0.5)' }}>
+        {/* Meta line — date + tags */}
+        <div className="flex items-center gap-3 mb-5">
+          <span className="text-red-500 font-semibold text-sm tracking-wide uppercase">{day} • {time}</span>
+          <span className="text-white/20">|</span>
+          <span className="text-white/40 text-sm capitalize">{weekday}</span>
         </div>
 
-        {/* Right Content - Event Poster */}
-         <div className="flex-1 flex justify-center lg:justify-end">
-           <div className="w-full max-w-[400px] md:max-w-[500px] lg:max-w-[600px] aspect-square">
-             <img 
-               src="/event_poster.jpg" 
-               alt="Event Poster" 
-               className="w-full h-full object-cover rounded-2xl md:rounded-3xl"
-             />
-           </div>
-         </div>
-         </div>
-       </main>
+        {/* Title — controlled, max 2 lines */}
+        <h1 className="text-white font-black text-3xl md:text-5xl lg:text-6xl leading-[1] uppercase max-w-2xl mb-4 tracking-tight">
+          {streamData.title}
+        </h1>
 
+        {/* Description — max 2 lines */}
+        {streamData.description && (
+          <p className="text-white/60 text-sm md:text-base leading-relaxed max-w-lg mb-8 line-clamp-2">
+            {streamData.description}
+          </p>
+        )}
 
-    </div>
+        {/* Countdown — inline compact */}
+        <div className="mb-8">
+          <CountdownTimer targetDate={streamData.stream_start_time} />
+        </div>
+
+        {/* CTA */}
+        <div className="flex flex-wrap items-center gap-4" style={{ textShadow: 'none' }}>
+          {hasAccess ? (
+            <Link href="/stream">
+              <button className="cursor-pointer group bg-white text-black font-bold text-sm md:text-base px-7 py-3.5 rounded-full flex items-center gap-2.5 hover:bg-white/90 transition-all duration-200 hover:scale-[1.03] active:scale-[0.97]">
+                <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                Vizionează acum
+              </button>
+            </Link>
+          ) : user?.free_access ? (
+            <Link href="/stream">
+              <button className="cursor-pointer group bg-white text-black font-bold text-sm md:text-base px-7 py-3.5 rounded-full flex items-center gap-2.5 hover:bg-white/90 transition-all duration-200 hover:scale-[1.03] active:scale-[0.97]">
+                <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                Vizionează gratuit
+              </button>
+            </Link>
+          ) : user && !user.free_access ? (
+            <>
+              <Link href={`/buy?streamId=${streamData.id}`}>
+                <button className="cursor-pointer group bg-red-600 hover:bg-red-500 text-white font-bold text-sm md:text-base px-7 py-3.5 rounded-full flex items-center gap-2.5 transition-all duration-200 hover:scale-[1.03] active:scale-[0.97]">
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                  Cumpără bilet — {streamData.price} {streamData.currency}
+                </button>
+              </Link>
+              <Link href={`/buy?streamId=${streamData.id}`}>
+                <span className="text-white/30 text-xs hidden md:block">Plata securizată prin MAIB</span>
+              </Link>
+            </>
+          ) : (
+            <Link href="/auth/login">
+              <button className="cursor-pointer group bg-white text-black font-bold text-sm md:text-base px-7 py-3.5 rounded-full flex items-center gap-2.5 hover:bg-white/90 transition-all duration-200 hover:scale-[1.03] active:scale-[0.97]">
+                <svg className="w-5 h-5 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                Conectează-te pentru a viziona
+              </button>
+            </Link>
+          )}
+        </div>
+      </div>
+    </section>
   )
 }

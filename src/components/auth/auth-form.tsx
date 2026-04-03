@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { createClient } from '@/lib/supabase-client'
+import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -9,7 +9,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '../ui/alert'
 import { Loader2, Mail, CheckCircle } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { useFingerprint } from '@/lib/fingerprint'
 import { getBaseUrl } from '@/lib/config'
 
 interface AuthFormProps {
@@ -27,7 +26,6 @@ export function AuthForm({ redirectTo = '/', onSuccess }: AuthFormProps) {
   const [countdown, setCountdown] = useState(0)
   
   const emailInputRef = useRef<HTMLInputElement>(null)
-  const { fingerprint, loading: fingerprintLoading } = useFingerprint()
   const supabase = createClient()
 
   // Автофокус на поле email
@@ -96,9 +94,6 @@ export function AuthForm({ redirectTo = '/', onSuccess }: AuthFormProps) {
 
     try {
       // Получаем отпечаток браузера для дополнительной безопасности
-      const deviceFingerprint = fingerprint || 'unknown'
-      
-      // Используем наш кастомный API для отправки красивого письма
       const response = await fetch('/api/auth/magic-link', {
         method: 'POST',
         headers: {
@@ -107,11 +102,6 @@ export function AuthForm({ redirectTo = '/', onSuccess }: AuthFormProps) {
         body: JSON.stringify({
           email: email.trim(),
           redirectTo: `${getBaseUrl()}/auth/callback?redirect=${encodeURIComponent(redirectTo)}`,
-          data: {
-            fingerprint: deviceFingerprint,
-            userAgent: navigator.userAgent,
-            timestamp: new Date().toISOString(),
-          },
         }),
       })
 
@@ -147,9 +137,6 @@ export function AuthForm({ redirectTo = '/', onSuccess }: AuthFormProps) {
     setMessage(null)
 
     try {
-      const deviceFingerprint = fingerprint || 'unknown'
-      
-      // Используем наш кастомный API для повторной отправки
       const response = await fetch('/api/auth/magic-link', {
         method: 'POST',
         headers: {
@@ -158,11 +145,6 @@ export function AuthForm({ redirectTo = '/', onSuccess }: AuthFormProps) {
         body: JSON.stringify({
           email: email.trim(),
           redirectTo: `${getBaseUrl()}/auth/callback?redirect=${encodeURIComponent(redirectTo)}`,
-          data: {
-            fingerprint: deviceFingerprint,
-            userAgent: navigator.userAgent,
-            timestamp: new Date().toISOString(),
-          },
         }),
       })
 
@@ -194,129 +176,80 @@ export function AuthForm({ redirectTo = '/', onSuccess }: AuthFormProps) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
       >
-        <Card className="w-full max-w-[466px] mx-auto bg-[#1B1B1B] border border-[#10C23F] rounded-xl p-6">
-          <CardHeader className="text-center pb-6 space-y-6">
-            <motion.div
-              initial={{ scale: 0, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
-              className="flex justify-center"
-            >
-              <div className="w-[56px] h-[56px] flex items-center justify-center">
-                <img src="/mdi_email-check.svg" alt="Email Check" className="w-[56px] h-[56px]" />
-              </div>
-            </motion.div>
-            <div className="space-y-3">
-              <CardTitle className="text-[32px] font-bold text-[#F2F2F2] leading-[1.275]" style={{fontFamily: 'Onest, sans-serif'}}>
-                E-mailul a fost trimis!
-              </CardTitle>
-              <CardDescription className="text-[14px] font-black text-[#F2F2F2] leading-[1.275]" style={{fontFamily: 'Onest, sans-serif'}}>
-                Verificați-vă adresa de e-mail {email}
-              </CardDescription>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <AnimatePresence>
-              {message && (
-                <motion.div
-                  initial={{ opacity: 0, height: 0, y: -10 }}
-                  animate={{ opacity: 1, height: 'auto', y: 0 }}
-                  exit={{ opacity: 0, height: 0, y: -10 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <Alert variant={message.type === 'error' ? 'destructive' : 'default'}>
-                    <AlertDescription>{message.text}</AlertDescription>
-                  </Alert>
-                </motion.div>
-              )}
-            </AnimatePresence>
-            
-
-            <motion.div 
-              className="bg-[#1B1B1B] p-4 rounded-xl border border-[#1557D6]"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-            >
-              <h4 className="text-[15px] font-bold text-[#F2F2F2] leading-[1.275] mb-2" style={{fontFamily: 'Onest, sans-serif'}}>Ce trebuie să faceți în continuare:</h4>
-              <ul className="text-[12px] font-normal text-[#F2F2F2] space-y-2 leading-[1.275]" style={{fontFamily: 'Onest, sans-serif'}}>
-                <li>Deschideți-vă adresa de e-mail</li>
-                <li>Găsiți e-mailul de la Standup</li>
-                <li>Faceți clic pe linkul de conectare</li>
-              </ul>
-            </motion.div>
-
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <Button
-                onClick={handleResend}
-                disabled={isLoading || countdown > 0}
-                className="w-full bg-[#D61515] hover:bg-[#B91515] disabled:bg-[#666666] text-[#F2F2F2] font-bold text-[16px] uppercase py-3 px-6 rounded-xl flex items-center justify-center gap-2 transition-all duration-200 shadow-lg hover:shadow-xl leading-[1.275] cursor-pointer disabled:cursor-not-allowed border border-[#F2F2F2]"
-                style={{fontFamily: 'Onest, sans-serif'}}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="w-6 h-6 animate-spin" />
-                    Se trimite...
-                  </>
-                ) : countdown > 0 ? (
-                  <>
-                    <img src="/em.svg" alt="" className="w-6 h-6" />
-                    Repetați după {countdown} secunde
-                  </>
-                ) : (
-                  <>
-                    <img src="/em.svg" alt="" className="w-6 h-6" />
-                    Trimiteți din nou
-                  </>
-                )}
-              </Button>
-            </motion.div>
-            
-            <Button
-              variant="ghost"
-              onClick={() => {
-                setIsEmailSent(false)
-                setMessage(null)
-                setCountdown(0)
-              }}
-              className="w-full text-[#F2F2F2] hover:bg-[#2A2A2A] transition-all duration-200 text-[14px] font-bold leading-[1.275] cursor-pointer flex items-center justify-center gap-2"
-              style={{fontFamily: 'Onest, sans-serif'}}
-            >
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M15 18L9 12L15 6" stroke="#F2F2F2" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+        <div className="w-full max-w-[440px] mx-auto bg-white rounded-2xl p-8 shadow-2xl shadow-black/20">
+          {/* Success icon */}
+          <motion.div
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+            className="flex justify-center mb-6"
+          >
+            <div className="w-16 h-16 rounded-full bg-green-50 flex items-center justify-center">
+              <svg className="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
               </svg>
-              Schimbați adresa de e-mail
-            </Button>
+            </div>
+          </motion.div>
 
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.5 }}
-              className="mt-6 space-y-4"
-            >
-              <div className="flex items-center justify-center gap-[14px]">
-                <div className="flex items-center gap-1">
-                  <img src="/shield-icon.svg" alt="Sigur" className="w-6 h-6" />
-                  <span className="text-[12px] font-normal text-[#939393] uppercase leading-[1.275]" style={{fontFamily: 'Onest, sans-serif'}}>Sigur</span>
+          <h2 className="text-2xl font-bold text-gray-900 text-center mb-2">E-mailul a fost trimis!</h2>
+          <p className="text-gray-500 text-sm text-center mb-6">
+            Verificați <span className="font-semibold text-gray-700">{email}</span>
+          </p>
+
+          {/* Message */}
+          <AnimatePresence>
+            {message && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="mb-4"
+              >
+                <div className={`p-3 rounded-lg text-sm ${message.type === 'error' ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
+                  {message.text}
                 </div>
-                <div className="flex items-center gap-1">
-                  <img src="/speed-icon.svg" alt="Rapid" className="w-6 h-6" />
-                  <span className="text-[12px] font-normal text-[#939393] uppercase leading-[1.275]" style={{fontFamily: 'Onest, sans-serif'}}>Rapid</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Steps */}
+          <div className="bg-gray-50 rounded-xl p-4 mb-6">
+            <p className="text-sm font-semibold text-gray-700 mb-3">Ce trebuie să faceți:</p>
+            <div className="space-y-2.5">
+              {['Deschideți e-mailul', 'Găsiți mesajul de la Standupovka', 'Faceți clic pe link'].map((step, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <span className="w-6 h-6 rounded-full bg-white border border-gray-200 flex items-center justify-center text-xs font-bold text-gray-500">{i + 1}</span>
+                  <span className="text-sm text-gray-600">{step}</span>
                 </div>
-                <div className="flex items-center gap-1">
-                  <img src="/password-icon.svg" alt="Fără parole" className="w-6 h-6" />
-                  <span className="text-[12px] font-normal text-[#939393] uppercase leading-[1.275]" style={{fontFamily: 'Onest, sans-serif'}}>Fără parole</span>
-                </div>
-              </div>
-              <p className="text-center text-[12px] font-normal text-[#939393] leading-[1.275]" style={{fontFamily: 'Onest, sans-serif'}}>
-                Nici o parolă — tot ce trebuie să faceți este să verificați e-mailul!
-              </p>
-            </motion.div>
-          </CardContent>
-        </Card>
+              ))}
+            </div>
+          </div>
+
+          {/* Resend */}
+          <button
+            onClick={handleResend}
+            disabled={isLoading || countdown > 0}
+            className="w-full bg-gray-900 hover:bg-gray-800 disabled:bg-gray-300 text-white disabled:text-gray-500 font-semibold py-3 px-6 rounded-xl transition-all duration-200 cursor-pointer disabled:cursor-not-allowed mb-3"
+          >
+            {isLoading ? (
+              <span className="flex items-center justify-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Se trimite...
+              </span>
+            ) : countdown > 0 ? (
+              `Retrimiteți după ${countdown}s`
+            ) : (
+              'Trimiteți din nou'
+            )}
+          </button>
+
+          <button
+            onClick={() => { setIsEmailSent(false); setMessage(null); setCountdown(0) }}
+            className="w-full text-gray-500 hover:text-gray-700 text-sm font-medium py-2 transition-colors cursor-pointer"
+          >
+            ← Schimbați adresa de e-mail
+          </button>
+        </div>
       </motion.div>
     )
   }
@@ -327,144 +260,128 @@ export function AuthForm({ redirectTo = '/', onSuccess }: AuthFormProps) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, ease: "easeOut" }}
     >
-      <Card className="w-full max-w-[466px] mx-auto bg-[#1B1B1B] border border-white rounded-xl p-6">
-        <CardHeader className="text-center pb-6 space-y-3">
-          <CardTitle className="text-[32px] font-bold text-white leading-[1.275]" style={{fontFamily: 'Onest, sans-serif'}}>
-            Bun venit!
-          </CardTitle>
-          <CardDescription className="text-[14px] font-black text-white uppercase leading-[1.275] tracking-wide" style={{fontFamily: 'Onest, sans-serif'}}>
-            Vă rugăm să introduceți un link către e-mail.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-1">
-              <Label htmlFor="email" className="text-[12px] font-normal text-[#F2F2F2] leading-[1.275] text-center block" style={{fontFamily: 'Onest, sans-serif'}}>
-                Adresă e-mail:
-              </Label>
-              <div className="relative">
-                <Input
-                  ref={emailInputRef}
-                  id="email"
-                  type="email"
-                  placeholder="your@email.com"
-                  value={email}
-                  onChange={handleEmailChange}
-                  disabled={isLoading || fingerprintLoading}
-                  required
-                  className="w-full h-auto py-4 px-3 text-[14px] font-medium text-[#F2F2F2] bg-transparent border border-[#F2F2F2] rounded-xl placeholder:text-[#F2F2F2] leading-[1.275] focus:border-[#F2F2F2] focus:ring-0"
-                  style={{fontFamily: 'Onest, sans-serif'}}
-                />
-                {emailTouched && (
-                  <motion.div
-                    initial={{ scale: 0, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2"
-                  >
-                    {isValidEmail ? (
-                      <CheckCircle className="w-5 h-5 text-green-500" />
-                    ) : (
-                      <div className="w-5 h-5 rounded-full border-2 border-red-300" />
-                    )}
-                  </motion.div>
-                )}
-              </div>
-              
-              {/* Автодополнение email */}
-              <AnimatePresence>
-                {emailSuggestion && email.includes('@') && emailSuggestion !== email && (
-                  <motion.button
-                    type="button"
-                    onClick={handleSuggestionClick}
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="w-full text-left p-2 text-sm bg-blue-50 hover:bg-blue-100 rounded-md border border-blue-200 transition-colors duration-200"
-                  >
-                    <span className="text-gray-600">Poate ați vrut să spuneți: </span>
-                    <span className="font-medium text-blue-600">{emailSuggestion}</span>
-                  </motion.button>
-                )}
-              </AnimatePresence>
-            </div>
+      <div className="w-full max-w-[440px] mx-auto bg-white rounded-2xl p-8 shadow-2xl shadow-black/20">
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-2">Bun venit!</h2>
+          <p className="text-gray-500 text-sm">Introduceți e-mailul pentru a primi linkul de conectare</p>
+        </div>
 
-            <AnimatePresence>
-              {message && (
+        <form onSubmit={handleSubmit} className="space-y-5">
+          {/* Email input */}
+          <div>
+            <label htmlFor="email" className="text-sm font-medium text-gray-700 block mb-1.5">
+              Adresă e-mail
+            </label>
+            <div className="relative">
+              <input
+                ref={emailInputRef}
+                id="email"
+                type="email"
+                placeholder="your@email.com"
+                value={email}
+                onChange={handleEmailChange}
+                disabled={isLoading}
+                required
+                className="w-full py-3.5 px-4 text-sm text-gray-900 bg-gray-50 border border-gray-200 rounded-xl placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-300 transition-all disabled:opacity-50"
+              />
+              {emailTouched && (
                 <motion.div
-                  initial={{ opacity: 0, height: 0, y: -10 }}
-                  animate={{ opacity: 1, height: 'auto', y: 0 }}
-                  exit={{ opacity: 0, height: 0, y: -10 }}
-                  transition={{ duration: 0.3 }}
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2"
                 >
-                  <Alert variant={message.type === 'error' ? 'destructive' : 'default'}>
-                    <AlertDescription>{message.text}</AlertDescription>
-                  </Alert>
+                  {isValidEmail ? (
+                    <CheckCircle className="w-5 h-5 text-green-500" />
+                  ) : (
+                    <div className="w-5 h-5 rounded-full border-2 border-gray-300" />
+                  )}
                 </motion.div>
               )}
+            </div>
+
+            {/* Email suggestion */}
+            <AnimatePresence>
+              {emailSuggestion && email.includes('@') && emailSuggestion !== email && (
+                <motion.button
+                  type="button"
+                  onClick={handleSuggestionClick}
+                  initial={{ opacity: 0, y: -5 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -5 }}
+                  className="mt-2 w-full text-left px-3 py-2 text-xs bg-blue-50 hover:bg-blue-100 rounded-lg border border-blue-100 transition-colors cursor-pointer"
+                >
+                  <span className="text-gray-500">Poate: </span>
+                  <span className="font-semibold text-blue-600">{emailSuggestion}</span>
+                </motion.button>
+              )}
             </AnimatePresence>
+          </div>
 
-            <motion.div
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              <Button
-                type="submit"
-                disabled={isLoading || fingerprintLoading || !email.trim() || !isValidEmail}
-                className="w-full bg-[#E31E24] hover:bg-[#C41E3A] disabled:bg-[#666666] text-white font-bold text-[16px] uppercase py-3 px-6 rounded-xl flex items-center justify-center gap-2 transition-all duration-200 shadow-lg hover:shadow-xl leading-[1.275] cursor-pointer disabled:cursor-not-allowed"
-                style={{fontFamily: 'Onest, sans-serif'}}
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="w-6 h-6 animate-spin" />
-                    Se trimite...
-                  </>
-                ) : (
-                  <>
-                    <img src="/email-icon.svg" alt="Email" className="w-6 h-6" />
-                    obțineți linkul de conectare
-                  </>
-                )}
-              </Button>
-            </motion.div>
-
-            {fingerprintLoading && (
+          {/* Error message */}
+          <AnimatePresence>
+            {message && (
               <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="flex items-center justify-center space-x-2 text-xs text-gray-500"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
               >
-                <Loader2 className="w-3 h-3 animate-pulse" />
-                <span>Inițializarea protecției...</span>
+                <div className={`p-3 rounded-lg text-sm ${message.type === 'error' ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
+                  {message.text}
+                </div>
               </motion.div>
             )}
-          </form>
+          </AnimatePresence>
 
-          <motion.div 
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            className="mt-6 space-y-4"
+          {/* Submit button */}
+          <button
+            type="submit"
+            disabled={isLoading || !email.trim() || !isValidEmail}
+            className="w-full bg-gray-900 hover:bg-gray-800 disabled:bg-gray-200 text-white disabled:text-gray-400 font-semibold text-sm py-3.5 px-6 rounded-xl transition-all duration-200 cursor-pointer disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            <div className="flex items-center justify-center gap-[14px]">
-              <div className="flex items-center gap-1">
-                <img src="/shield-icon.svg" alt="Sigur" className="w-6 h-6" />
-                <span className="text-[12px] font-normal text-[#939393] uppercase leading-[1.275]" style={{fontFamily: 'Onest, sans-serif'}}>Sigur</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <img src="/speed-icon.svg" alt="Rapid" className="w-6 h-6" />
-                <span className="text-[12px] font-normal text-[#939393] uppercase leading-[1.275]" style={{fontFamily: 'Onest, sans-serif'}}>Rapid</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <img src="/password-icon.svg" alt="Fără parole" className="w-6 h-6" />
-                <span className="text-[12px] font-normal text-[#939393] uppercase leading-[1.275]" style={{fontFamily: 'Onest, sans-serif'}}>Fără parole</span>
-              </div>
+            {isLoading ? (
+              <>
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Se trimite...
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                Obțineți linkul de conectare
+              </>
+            )}
+          </button>
+        </form>
+
+        {/* Trust badges */}
+        <div className="mt-8 pt-6 border-t border-gray-100">
+          <div className="flex items-center justify-center gap-6 text-gray-400">
+            <div className="flex items-center gap-1.5">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+              <span className="text-xs">Sigur</span>
             </div>
-            <p className="text-center text-[12px] font-normal text-[#939393] leading-[1.275]" style={{fontFamily: 'Onest, sans-serif'}}>
-              Nici o parolă — tot ce trebuie să faceți este să verificați e-mailul!
-            </p>
-          </motion.div>
-        </CardContent>
-      </Card>
+            <div className="flex items-center gap-1.5">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              <span className="text-xs">Rapid</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+              </svg>
+              <span className="text-xs">Fără parole</span>
+            </div>
+          </div>
+          <p className="text-center text-xs text-gray-400 mt-3">
+            Nici o parolă — verificați doar e-mailul!
+          </p>
+        </div>
+      </div>
     </motion.div>
   )
 }

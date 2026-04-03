@@ -105,19 +105,7 @@ export class MAIBPaymentService {
     this.projectSecret = process.env.MAIB_PROJECT_SECRET!
     this.signatureKey = process.env.MAIB_SIGNATURE_KEY!
     
-    console.log('🔧 MAIB Service initialized:', {
-      apiUrl: this.apiUrl,
-      projectId: this.projectId ? `${this.projectId.slice(0, 8)}...` : 'MISSING',
-      projectSecret: this.projectSecret ? 'SET' : 'MISSING',
-      signatureKey: this.signatureKey ? 'SET' : 'MISSING'
-    })
-    
     if (!this.projectId || !this.projectSecret || !this.signatureKey) {
-      console.error('❌ MAIB configuration missing:', {
-        projectId: !!this.projectId,
-        projectSecret: !!this.projectSecret,
-        signatureKey: !!this.signatureKey
-      })
       throw new Error('MAIB configuration is incomplete')
     }
   }
@@ -147,7 +135,7 @@ export class MAIBPaymentService {
       projectSecret: this.projectSecret
     }
 
-    console.log('🔑 Generating MAIB access token...')
+    // Generating MAIB access token
 
     return new Promise((resolve, reject) => {
       const url = new URL(`${this.apiUrl}/generate-token`)
@@ -173,7 +161,7 @@ export class MAIBPaymentService {
         })
 
         res.on('end', () => {
-          console.log('🔑 Token generation response status:', res.statusCode, res.statusMessage)
+          // Token response received
 
           if (res.statusCode !== 200) {
             console.error('❌ Token generation failed:', {
@@ -187,7 +175,7 @@ export class MAIBPaymentService {
 
           try {
             const tokenResponse: MAIBTokenResponse = JSON.parse(data)
-            console.log('🔑 Token generation response:', tokenResponse)
+            // Token parsed
             
             if (!tokenResponse.ok || !tokenResponse.result) {
               console.error('❌ Token generation failed - invalid response:', tokenResponse)
@@ -198,7 +186,7 @@ export class MAIBPaymentService {
             this.accessToken = tokenResponse.result.accessToken
             this.tokenExpiresAt = Date.now() + (tokenResponse.result.expiresIn * 1000) - 30000 // 30 seconds buffer
             
-            console.log('✅ Access token generated successfully')
+            // Access token ready
             resolve(this.accessToken)
           } catch (error) {
             reject(new Error(`Failed to parse token response: ${error}`))

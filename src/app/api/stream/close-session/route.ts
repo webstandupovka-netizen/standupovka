@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerClientAuth } from '@/lib/auth/config'
-import { supabaseServer } from '@/lib/database/client'
+import { createClient as createServerClient } from '@/lib/supabase/server'
+import { supabaseAdmin } from '@/lib/supabase/admin'
 import { z } from 'zod'
 
 const closeSessionSchema = z.object({
@@ -11,10 +11,10 @@ const closeSessionSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createServerClientAuth()
-    const { data: { session } } = await supabase.auth.getSession()
+    const supabase = await createServerClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
-    if (!session) {
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -22,10 +22,10 @@ export async function POST(request: NextRequest) {
     const { streamId, sessionId, reason } = closeSessionSchema.parse(body)
 
     // Получаем активные сессии пользователя
-    const { data: activeSessions, error: sessionsError } = await supabaseServer
+    const { data: activeSessions, error: sessionsError } = await supabaseAdmin
       .from('user_sessions')
       .select('*')
-      .eq('user_id', session.user.id)
+      .eq('user_id', user.id)
       .eq('is_active', true)
       .order('created_at', { ascending: false })
 
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
 
     // Закрываем сессии
     const sessionIds = sessionsToClose.map(s => s.id)
-    const { error: updateError } = await supabaseServer
+    const { error: updateError } = await supabaseAdmin
       .from('user_sessions')
       .update({
         is_active: false,
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Логируем закрытие сессий
-    console.log(`Closed ${sessionsToClose.length} session(s) for user ${session.user.id}, reason: ${reason}`)
+    console.log(`Closed ${sessionsToClose.length} session(s) for user ${user.id}, reason: ${reason}`)
 
     // Если это запрос пользователя, также можем завершить его auth сессию
     if (reason === 'user_request') {
@@ -103,17 +103,17 @@ export async function POST(request: NextRequest) {
 // GET endpoint для получения информации об активных сессиях
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createServerClientAuth()
-    const { data: { session } } = await supabase.auth.getSession()
+    const supabase = await createServerClient()
+    const { data: { user } } = await supabase.auth.getUser()
 
-    if (!session) {
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const { data: activeSessions, error } = await supabaseServer
+    const { data: activeSessions, error } = await supabaseAdmin
       .from('user_sessions')
       .select('*')
-      .eq('user_id', session.user.id)
+      .eq('user_id', user.id)
       .eq('is_active', true)
       .order('created_at', { ascending: false })
 

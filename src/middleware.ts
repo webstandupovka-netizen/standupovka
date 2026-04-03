@@ -8,45 +8,60 @@ const protectedRoutes = ['/profile', '/stream']
 // Маршруты, доступные только неаутентифицированным пользователям
 const authRoutes = ['/auth/login']
 
-// Публичные маршруты, доступные всем
-const publicRoutes = ['/', '/auth/callback']
-
 // Админские маршруты
 const adminRoutes = ['/admin']
 // Публичные админские маршруты (не требуют аутентификации)
 const publicAdminRoutes = ['/admin/login']
 
+// Maintenance mode — если PREVIEW_SECRET задан, сайт закрыт для всех кроме тех у кого есть cookie
+const MAINTENANCE_MODE = !!process.env.PREVIEW_SECRET
+
 export async function middleware(request: NextRequest) {
-  const { supabase, response } = createSupabaseMiddlewareClient(request)
-  const {
-    data: { session },
-  } = await supabase.auth.getSession()
   const { pathname } = request.nextUrl
 
-  // Пропускаем статические файлы и API маршруты
+  // Пропускаем статические файлы без обработки
   if (
     pathname.startsWith('/_next/') ||
-    pathname.startsWith('/api/') ||
     pathname.includes('.') ||
     pathname.startsWith('/favicon')
   ) {
     return NextResponse.next()
   }
 
-  const isAuthenticated = !!session?.user
-  const isAdmin = isAdminAuthenticated(request)
+  // === MAINTENANCE MODE ===
+  // Если PREVIEW_SECRET задан — проверяем cookie. Пропускаем /preview, /coming-soon, /api/, /admin
+  if (MAINTENANCE_MODE) {
+    const bypassRoutes = ['/preview', '/coming-soon', '/api/', '/admin']
+    const isBypassed = bypassRoutes.some(r => pathname.startsWith(r))
+
+    if (!isBypassed) {
+      const previewCookie = request.cookies.get('preview-access')?.value
+      if (previewCookie !== process.env.PREVIEW_SECRET) {
+        return NextResponse.redirect(new URL('/coming-soon', request.url))
+      }
+    }
+  }
+
+  // Создаём Supabase middleware client — обновляет auth cookies для ВСЕХ routes (включая /api/)
+  const { supabase, response } = createSupabaseMiddlewareClient(request)
+  const { data: { user } } = await supabase.auth.getUser()
+
+  // Для API routes — только обновление cookies, без redirect-логики
+  if (pathname.startsWith('/api/')) {
+    return response
+  }
+
+  // Далее — redirect-логика только для page routes
+  const isAuthenticated = !!user
+  const isAdmin = await isAdminAuthenticated(request)
 
   const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route))
   const isAuthRoute = authRoutes.some(route => pathname.startsWith(route))
   const isAdminRoute = adminRoutes.some(route => pathname.startsWith(route))
   const isPublicAdminRoute = publicAdminRoutes.some(route => pathname.startsWith(route))
 
-  // Если админ авторизован, предоставляем доступ ко всем страницам (кроме проверки админских маршрутов)
+  // Если админ авторизован, предоставляем доступ ко всем страницам
   if (isAdmin) {
-    // Логика для админских маршрутов
-    if (isAdminRoute && !isPublicAdminRoute) {
-      return response // админ уже авторизован
-    }
     return response
   }
 
@@ -55,8 +70,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/admin/login', request.url))
   }
 
-  // Если пользователь не аутентифицирован и не админ, и пытается получить доступ к защищенному маршруту
-  if (!isAuthenticated && !isAdmin && isProtectedRoute) {
+  // Если пользователь не аутентифицирован и пытается получить доступ к защищенному маршруту
+  if (!isAuthenticated && isProtectedRoute) {
     const redirectUrl = new URL('/auth/login', request.url)
     const fullPath = pathname + request.nextUrl.search
     redirectUrl.searchParams.set('redirect', fullPath)
