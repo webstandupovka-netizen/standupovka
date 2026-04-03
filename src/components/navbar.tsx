@@ -60,15 +60,16 @@ export function Navbar({ user, onSignOut }: NavbarProps) {
             </button>
           </div>
         ) : (
-          <Link
+          <a
             href="/auth/login"
-            className="bg-white text-black font-semibold text-sm px-5 py-2 rounded-lg hover:bg-white/90 transition-all duration-200 flex items-center gap-2 cursor-pointer relative z-50"
+            style={{ WebkitTapHighlightColor: 'rgba(0,0,0,0.1)' }}
+            className="bg-white text-black font-semibold text-sm px-5 py-2 rounded-lg hover:bg-white/90 transition-all duration-200 flex items-center gap-2 cursor-pointer no-underline"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
             Conectare
-          </Link>
+          </a>
         )}
       </div>
     </header>
