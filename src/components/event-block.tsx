@@ -7,6 +7,7 @@ import { UserProfile } from '@/types/database'
 interface EventBlockProps {
   user: UserProfile | null
   hasAccess: boolean
+  isLoading?: boolean
   streamData: {
     id: string
     title: string
@@ -62,8 +63,21 @@ function CountdownTimer({ targetDate }: { targetDate: string }) {
   )
 }
 
-export function EventBlock({ user, hasAccess, streamData }: EventBlockProps) {
+export function EventBlock({ user, hasAccess, streamData, isLoading }: EventBlockProps) {
   if (!streamData) {
+    if (isLoading) {
+      // Skeleton — пользователь видит что страница загружается
+      return (
+        <div style={{ minHeight: '85vh', background: '#000', display: 'flex', alignItems: 'flex-end', padding: '56px 16px' }}>
+          <div style={{ maxWidth: '1200px', width: '100%', margin: '0 auto' }}>
+            <div style={{ width: '200px', height: '20px', background: 'rgba(255,255,255,0.05)', borderRadius: '8px', marginBottom: '20px' }} />
+            <div style={{ width: '80%', maxWidth: '500px', height: '48px', background: 'rgba(255,255,255,0.05)', borderRadius: '12px', marginBottom: '16px' }} />
+            <div style={{ width: '60%', maxWidth: '400px', height: '16px', background: 'rgba(255,255,255,0.03)', borderRadius: '8px', marginBottom: '32px' }} />
+            <div style={{ width: '220px', height: '48px', background: 'rgba(255,255,255,0.05)', borderRadius: '999px' }} />
+          </div>
+        </div>
+      )
+    }
     return (
       <div style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ textAlign: 'center' }}>

@@ -13,6 +13,7 @@ export default function Home() {
   const [archivedStreams, setArchivedStreams] = useState<any[]>([])
   const [hasAccessToUpcoming, setHasAccessToUpcoming] = useState(false)
   const [paidStreamIds, setPaidStreamIds] = useState<Set<string>>(new Set())
+  const [streamsLoaded, setStreamsLoaded] = useState(false)
 
   const { user, profile, loading } = useUser()
   const userId = user?.id
@@ -45,6 +46,8 @@ export default function Home() {
       setArchivedStreams(archived)
     } catch (error) {
       console.error('Error fetching streams:', error)
+    } finally {
+      setStreamsLoaded(true)
     }
   }, [])
 
@@ -108,7 +111,7 @@ export default function Home() {
   return (
     <div className="flex flex-col">
       {/* Hero — ближайшее / текущее событие */}
-      <EventBlock user={profile} hasAccess={hasAccessToUpcoming} streamData={upcomingStream} />
+      <EventBlock user={profile} hasAccess={hasAccessToUpcoming} streamData={upcomingStream} isLoading={!streamsLoaded} />
 
       {/* Архив записей */}
       {archiveCards.length > 0 && (

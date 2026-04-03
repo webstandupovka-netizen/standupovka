@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 
 // GET /api/streams — публичный список активных событий (без sensitive полей)
+// Кэшируется на 30 сек, stale-while-revalidate 60 сек
 export async function GET() {
   try {
     const { data: streams, error } = await supabaseAdmin
@@ -14,7 +15,9 @@ export async function GET() {
       return NextResponse.json({ streams: [] })
     }
 
-    return NextResponse.json({ streams: streams || [] })
+    const response = NextResponse.json({ streams: streams || [] })
+    response.headers.set('Cache-Control', 's-maxage=30, stale-while-revalidate=60')
+    return response
   } catch {
     return NextResponse.json({ streams: [] })
   }
