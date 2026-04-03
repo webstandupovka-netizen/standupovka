@@ -63,6 +63,7 @@ export function RefundPayment({ payment, onRefundComplete }: RefundPaymentProps)
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify(requestBody)
       })
 

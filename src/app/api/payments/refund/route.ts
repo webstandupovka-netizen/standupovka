@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient as createServerClient } from '@/lib/supabase/server'
+import { getAdminFromRequest } from '@/lib/auth/admin-auth'
 import { MAIBPaymentService } from '@/lib/payments/maib'
 import { supabaseAdmin } from '@/lib/supabase/admin'
 import { z } from 'zod'
@@ -11,10 +11,10 @@ const refundSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createServerClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    // Refund — только для админов
+    const admin = await getAdminFromRequest(request)
 
-    if (!user) {
+    if (!admin) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -26,7 +26,6 @@ export async function POST(request: NextRequest) {
       .from('payments')
       .select('*')
       .eq('id', paymentId)
-      .eq('user_id', user.id)
       .eq('status', 'completed')
       .single()
 

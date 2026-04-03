@@ -21,7 +21,7 @@ const magicLinkSchema = z.object({
 // Rate limiting: максимум 3 запроса на email за 15 минут
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
 const RATE_LIMIT_MAX = 5
-const RATE_LIMIT_WINDOW_MS = 5 * 60 * 1000 // 5 минут
+const RATE_LIMIT_WINDOW_MS = 2 * 60 * 1000 // 2 минуты
 
 function checkRateLimit(email: string): { allowed: boolean; retryAfterSeconds?: number } {
   const now = Date.now()
