@@ -19,12 +19,9 @@ export default function Home() {
 
   const fetchStreams = useCallback(async () => {
     try {
-      // Все активные события, отсортированные по дате
-      const { data: allStreams } = await supabase
-        .from('stream_settings')
-        .select('*')
-        .eq('is_active', true)
-        .order('stream_start_time', { ascending: false })
+      // Загружаем через наш API (работает в любом браузере, нет CORS проблем)
+      const res = await fetch('/api/streams')
+      const { streams: allStreams } = await res.json()
 
       if (!allStreams || allStreams.length === 0) {
         setUpcomingStream(null)
@@ -35,14 +32,14 @@ export default function Home() {
       const now = new Date().toISOString()
 
       // Ищем: live > будущее > последнее
-      const live = allStreams.find(s => s.is_live)
-      const upcoming = allStreams.find(s => s.stream_start_time > now)
+      const live = allStreams.find((s: any) => s.is_live)
+      const upcoming = allStreams.find((s: any) => s.stream_start_time > now)
       const hero = live || upcoming || allStreams[0]
 
       setUpcomingStream(hero)
 
       // Архив — все кроме hero, прошедшие
-      const archived = allStreams.filter(s =>
+      const archived = allStreams.filter((s: any) =>
         s.id !== hero.id && s.stream_start_time < now
       )
       setArchivedStreams(archived)
