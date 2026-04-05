@@ -59,29 +59,38 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Stream not found' }, { status: 404 })
     }
 
-    // 4. Если есть Cloudflare video
+    // 4. Если есть Cloudflare video (поддержка нескольких частей через запятую)
     if (stream.cf_video_id) {
+      const videoIds = stream.cf_video_id.split(',').map((id: string) => id.trim()).filter(Boolean)
+
       // Пробуем signed token, если ключи настроены
       try {
         const signingKeyId = process.env.CLOUDFLARE_STREAM_SIGNING_KEY_ID
         const signingKeyPem = process.env.CLOUDFLARE_STREAM_SIGNING_KEY_PEM
 
         if (signingKeyId && signingKeyPem) {
-          const token = CloudflareStreamService.createSignedToken(stream.cf_video_id, 900)
+          const parts = videoIds.map((id: string) => ({
+            token: CloudflareStreamService.createSignedToken(id, 900),
+            videoId: id,
+          }))
           return NextResponse.json({
             type: 'cloudflare',
-            token,
-            videoId: stream.cf_video_id,
+            // Обратная совместимость: одиночное видео — плоский ответ
+            ...(parts.length === 1
+              ? { token: parts[0].token, videoId: parts[0].videoId }
+              : { parts }),
           })
         }
       } catch {
         // Signing keys не настроены — fallback на прямой embed
       }
 
-      // Без signed URL — прямой embed (видео должно быть публичным)
+      // Без signed URL — прямой embed
       return NextResponse.json({
         type: 'cloudflare-public',
-        videoId: stream.cf_video_id,
+        ...(videoIds.length === 1
+          ? { videoId: videoIds[0] }
+          : { parts: videoIds.map((id: string) => ({ videoId: id })) }),
       })
     }
 

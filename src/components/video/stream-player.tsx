@@ -3,6 +3,11 @@
 import { useEffect, useState, useCallback } from 'react'
 import { cn } from '@/lib/utils'
 
+interface VideoPart {
+  token?: string
+  videoId?: string
+}
+
 interface StreamPlayerProps {
   streamId: string
   isLive?: boolean
@@ -13,18 +18,19 @@ interface StreamPlayerProps {
 
 /**
  * Универсальный видеоплеер.
- * - Live: показывает iframe с live embed URL (Castr/Cloudflare).
- * - VOD: запрашивает signed token через API → показывает Cloudflare Stream iframe.
- * - Fallback: прямой URL через <video> тег (для старых записей).
+ * - Live: iframe с live embed URL.
+ * - VOD: Cloudflare Stream iframe (поддержка нескольких частей).
+ * - Fallback: прямой URL через <video>.
  */
 export function StreamPlayer({ streamId, isLive, liveEmbedUrl, poster, className }: StreamPlayerProps) {
   const [videoState, setVideoState] = useState<{
     type: 'loading' | 'cloudflare' | 'direct' | 'error'
-    token?: string
-    videoId?: string
+    parts?: VideoPart[]
     url?: string
     error?: string
   }>({ type: 'loading' })
+
+  const [activePart, setActivePart] = useState(0)
 
   const fetchVideoToken = useCallback(async () => {
     try {
@@ -42,10 +48,12 @@ export function StreamPlayer({ streamId, isLive, liveEmbedUrl, poster, className
 
       const data = await res.json()
 
-      if (data.type === 'cloudflare') {
-        setVideoState({ type: 'cloudflare', token: data.token, videoId: data.videoId })
-      } else if (data.type === 'cloudflare-public') {
-        setVideoState({ type: 'cloudflare', videoId: data.videoId })
+      if (data.type === 'cloudflare' || data.type === 'cloudflare-public') {
+        // Нормализуем в массив частей
+        const parts: VideoPart[] = data.parts
+          ? data.parts
+          : [{ token: data.token, videoId: data.videoId }]
+        setVideoState({ type: 'cloudflare', parts })
       } else if (data.type === 'direct') {
         setVideoState({ type: 'direct', url: data.url })
       } else {
@@ -56,14 +64,11 @@ export function StreamPlayer({ streamId, isLive, liveEmbedUrl, poster, className
     }
   }, [streamId])
 
-  // Для VOD: загружаем signed token
   useEffect(() => {
-    if (!isLive) {
-      fetchVideoToken()
-    }
+    if (!isLive) fetchVideoToken()
   }, [isLive, fetchVideoToken])
 
-  // Для VOD: обновляем token каждые 12 минут (TTL 15 мин, обновляем заранее)
+  // Обновляем токены каждые 12 минут (TTL 15 мин)
   useEffect(() => {
     if (!isLive && videoState.type === 'cloudflare') {
       const interval = setInterval(fetchVideoToken, 12 * 60 * 1000)
@@ -71,7 +76,7 @@ export function StreamPlayer({ streamId, isLive, liveEmbedUrl, poster, className
     }
   }, [isLive, videoState.type, fetchVideoToken])
 
-  // Live стрим — iframe с embed URL
+  // Live
   if (isLive && liveEmbedUrl) {
     return (
       <div className={cn('relative bg-black rounded-xl overflow-hidden', className)}>
@@ -115,26 +120,48 @@ export function StreamPlayer({ streamId, isLive, liveEmbedUrl, poster, className
     )
   }
 
-  // Cloudflare Stream — iframe (signed token или public videoId)
-  if (videoState.type === 'cloudflare' && (videoState.token || videoState.videoId)) {
+  // Cloudflare Stream
+  if (videoState.type === 'cloudflare' && videoState.parts?.length) {
+    const parts = videoState.parts
+    const current = parts[activePart]
     const subdomain = process.env.NEXT_PUBLIC_CLOUDFLARE_CUSTOMER_SUBDOMAIN || ''
-    const id = videoState.token || videoState.videoId
+    const id = current.token || current.videoId
     const embedUrl = `https://${subdomain}.cloudflarestream.com/${id}/iframe`
+    const multiPart = parts.length > 1
 
     return (
-      <div className={cn('relative bg-black rounded-xl overflow-hidden', className)}>
+      <div className={cn('relative bg-black rounded-xl overflow-hidden flex flex-col', className)}>
+        {multiPart && (
+          <div className="flex bg-black/90 border-b border-white/10 shrink-0">
+            {parts.map((_, i) => (
+              <button
+                key={i}
+                onClick={() => setActivePart(i)}
+                className={cn(
+                  'flex-1 py-2.5 text-sm font-medium transition-colors',
+                  i === activePart
+                    ? 'text-white bg-white/10 border-b-2 border-white'
+                    : 'text-white/50 hover:text-white/80 hover:bg-white/5'
+                )}
+              >
+                Partea {i + 1}
+              </button>
+            ))}
+          </div>
+        )}
         <iframe
+          key={activePart}
           src={embedUrl}
-          className="w-full h-full"
+          className="w-full flex-1"
           allow="autoplay; fullscreen; picture-in-picture"
           allowFullScreen
-          title="Video Player"
+          title={multiPart ? `Video Part ${activePart + 1}` : 'Video Player'}
         />
       </div>
     )
   }
 
-  // Direct URL fallback — для старых записей
+  // Direct URL fallback
   if (videoState.type === 'direct' && videoState.url) {
     return (
       <div className={cn('relative bg-black rounded-xl overflow-hidden', className)}>
